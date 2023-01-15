@@ -30,10 +30,24 @@ set(PLAYDATE_GAME_DEVICE playdate_chipmunk_lib_DEVICE)
 
 project(${PLAYDATE_GAME_NAME} C ASM)
 
+#file(GLOB CHIPMUNK_GLOB
+#	"chipmunk/src/*.c"
+#	"chipmunk/include/chipmmunk/*.h"
+#)
+
+file(GLOB LUA_CODE
+	"Source/*.lua"
+)
+
+include_directories(
+	"chipmunk"
+	"chipdx"
+)
+
 if (TOOLCHAIN STREQUAL "armgcc")
 	add_executable(${PLAYDATE_GAME_DEVICE} ${SDK}/C_API/buildsupport/setup.c src/main.c)
 else()
-	add_library(${PLAYDATE_GAME_NAME} SHARED src/main.c )
+	add_library(${PLAYDATE_GAME_NAME} SHARED chipdx/main.c )
 endif()
 
 include(${SDK}/C_API/buildsupport/playdate_game.cmake)
