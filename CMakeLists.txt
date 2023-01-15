@@ -45,9 +45,9 @@ include_directories(
 )
 
 if (TOOLCHAIN STREQUAL "armgcc")
-	add_executable(${PLAYDATE_GAME_DEVICE} ${SDK}/C_API/buildsupport/setup.c src/main.c)
+	add_executable(${PLAYDATE_GAME_DEVICE} ${SDK}/C_API/buildsupport/setup.c chipdx/main.c)
 else()
-	add_library(${PLAYDATE_GAME_NAME} SHARED chipdx/main.c )
+	add_library(${PLAYDATE_GAME_NAME} SHARED chipdx/main.c chipdx/luaglue.c )
 endif()
 
 include(${SDK}/C_API/buildsupport/playdate_game.cmake)
