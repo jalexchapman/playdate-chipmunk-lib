@@ -50,3 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#pdx windows build gunk
+build/
+
+
+#Pull your own copy of Chipmunk at https://github.com/slembcke/Chipmunk2D/releases/tag/Chipmunk-7.0.3
+chipmunk/

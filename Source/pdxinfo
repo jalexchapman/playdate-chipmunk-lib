@@ -1,0 +1,5 @@
+name=Playdate Chipmunk Lib
+author=Alex Chapman
+description=Playdate Lua bindings for Chipmunk 2D
+bundleID=io.github.jalexchapman
+imagePath=
