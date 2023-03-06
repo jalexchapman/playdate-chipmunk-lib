@@ -14,6 +14,7 @@ endif
 
 VPATH += chipdx
 VPATH += chipmunk
+VPATH += chipmunk/include/chipmunk
 
 # List C source files here
 SRC = \

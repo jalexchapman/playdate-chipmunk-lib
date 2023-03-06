@@ -1,5 +1,6 @@
+#include <math.h>
 #include "luaglue.h"
-//and all the chipmunk headers!
+#include "chipmunk.h"
 
 #ifndef CP_USE_DOUBLES
 	// double-precision is very slow on Playdate and not needed for the scales we'll use
@@ -17,3 +18,14 @@ void registerChipmunk(PlaydateAPI* playdate)
 
     //a whole bunch of pd->lua->registerClass() for each Chipmunk class. The fun part.
 }
+
+//chipmunk_types.h?
+//cpSpace
+//cpShape
+// cpCircleShapeNew
+// cpBoxShapeNew
+// cpMomentForCircle
+// cpMomentForBox
+//cpBody
+//cpConstraint?
+
