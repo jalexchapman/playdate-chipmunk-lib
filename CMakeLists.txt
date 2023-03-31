@@ -30,17 +30,20 @@ set(PLAYDATE_GAME_DEVICE playdate_chipmunk_lib_DEVICE)
 
 project(${PLAYDATE_GAME_NAME} C ASM)
 
-#file(GLOB CHIPMUNK_GLOB
-#	"chipmunk/src/*.c"
-#	"chipmunk/include/chipmmunk/*.h"
-#)
+file(GLOB CHIPMUNK_GLOB
+	"chipmunk/src/*.c"
+	"chipmunk/include/chipmunk/*.h"
+)
+
+#TODO: do we need GLOB CORE_HEADERS like in the mini3d sample?
 
 file(GLOB LUA_CODE
 	"Source/*.lua"
 )
 
 include_directories(
-	"chipmunk"
+	"chipmunk/include/chipmunk"
+	"chipmunk/src"
 	"chipdx"
 )
 
