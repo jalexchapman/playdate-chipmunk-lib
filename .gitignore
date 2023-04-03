@@ -52,11 +52,14 @@ Mkfile.old
 dkms.conf
 
 Source/*.bin
-playdate_chipmunk_lib.pdx/
+ChipmunkLibrary.pdx/
 
 #IDE gunk
 .vscode/
+.nova/
 
 #pdx windows build gunk
 build/
 
+#mac gunk
+.DS_Store

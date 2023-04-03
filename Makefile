@@ -13,12 +13,14 @@ $(error SDK path not found; set ENV value PLAYDATE_SDK_PATH)
 endif
 
 VPATH += chipdx
+VPATH += chipmunk/src
 VPATH += chipmunk/include
 VPATH += chipmunk/include/chipmunk
-VPATH += chipmunk/src
 
 # List C source files here
 SRC = \
+	chipdx/main.c \
+	chipdx/luaglue.c \
 	chipmunk/src/chipmunk.c \
 	chipmunk/src/cpArbiter.c \
 	chipmunk/src/cpArray.c \
@@ -31,7 +33,6 @@ SRC = \
 	chipmunk/src/cpGearJoint.c \
 	chipmunk/src/cpGrooveJoint.c \
 	chipmunk/src/cpHashSet.c \
-	chipmunk/src/cpHastySpace.c \
 	chipmunk/src/cpMarch.c \
 	chipmunk/src/cpPinJoint.c \
 	chipmunk/src/cpPivotJoint.c \
@@ -50,18 +51,17 @@ SRC = \
 	chipmunk/src/cpSpaceQuery.c \
 	chipmunk/src/cpSpaceStep.c \
 	chipmunk/src/cpSpatialIndex.c \
-	chipmunk/src/cpSweep1D.c \
-	chipdx/main.c \
-	chipdx/luaglue.c
+	chipmunk/src/cpSweep1D.c
+	
 	
 
 ASRC = setup.s
 
 # List all user directories here
-UINCDIR = chipdx chipmunk
+UINCDIR = chipdx chipmunk/include chipmunk/include/chipmunk
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS =
+UDEFS = -DCP_USE_DOUBLES=0 -DCP_USE_CGTYPES=0
 
 # Define ASM defines here
 UADEFS =
@@ -75,3 +75,5 @@ ULIBS =
 #CLANGFLAGS = -fsanitize=address
 
 include $(SDK)/C_API/buildsupport/common.mk
+
+LDFLAGS += --specs=nosys.specs

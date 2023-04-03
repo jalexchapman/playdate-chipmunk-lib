@@ -4,12 +4,7 @@
 
 #include <math.h>
 #include "luaglue.h"
-#include "../chipmunk/include/chipmunk/chipmunk.h"
-
-#ifndef CP_USE_DOUBLES
-	// double-precision is very slow on Playdate and not needed for the scales we'll use
-	#define CP_USE_DOUBLES 0
-#endif
+#include "chipmunk.h"
 
 static PlaydateAPI* pd = NULL;
 
@@ -18,13 +13,11 @@ static PlaydateAPI* pd = NULL;
 #define CLASSNAME_SHAPE "chipmunk.shape"
 // #define CLASSNAME_CONSTRAINT "chipmunk.constraint"
 
-
 // UTILITY
 static cpSpace* getSpaceArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_SPACE, NULL); }
 static cpBody* getBodyArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_BODY, NULL); }
 static cpShape* getShapeArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_SHAPE, NULL); }
 // static cpConstraint* getConstraintArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_CONSTRAINT, NULL); }
-
 
 //cpSpace
 int chipmunk_space_new(lua_State* L){
@@ -97,8 +90,6 @@ void registerChipmunk(PlaydateAPI* playdate)
 {
     pd = playdate;
     const char* err;
-
-    pd->system->logToConsole("in registerChipmunk\n");
 
     if (!pd->lua->registerClass(CLASSNAME_SPACE, spaceClass, NULL, 0, &err)) {
         pd->system->logToConsole("chipmunk: failed to register space class. %s", err);
