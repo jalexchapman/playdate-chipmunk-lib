@@ -57,6 +57,7 @@ ChipmunkLibrary.pdx/
 #IDE gunk
 .vscode/
 .nova/
+playdate-chipmunk-lib.code-workspace
 
 #pdx windows build gunk
 build/
