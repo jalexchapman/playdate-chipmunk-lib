@@ -32,19 +32,11 @@ int chipmunk_space_delete(lua_State* L){
     //TODO: make sure we don't have to delete contents first
 }
 
-int chipmunk_space_step(lua_State* L){
-    cpSpace* space = getSpaceArg(1);
-    float dt = pd->lua->getArgFloat(2);
-    cpSpaceStep(space, dt);
-    return 0;
-}
-
 int chipmunk_space_getGravity(lua_State* L){
     cpSpace* space = getSpaceArg(1);
     cpVect gravity = cpSpaceGetGravity(space);
     pd->lua->pushFloat((float) gravity.x);
     pd->lua->pushFloat((float) gravity.y);
-
     return 2;
 }
 
@@ -56,18 +48,113 @@ int chipmunk_space_setGravity(lua_State* L){
     return 0;
 }
 
+int chipmunk_space_getDamping(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    float damping = cpSpaceGetDamping(space);
+    pd->lua->pushFloat(damping);
+    return 2;
+}
+
+int chipmunk_space_setDamping(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    float damping = pd->lua->getArgFloat(2);
+    cpSpaceSetDamping(space, damping);
+    return 0;
+}
+
+int chipmunk_space_getIterations(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    int iterations = cpSpaceGetIterations(space);
+    pd->lua->pushFloat(iterations);
+    return 2;
+}
+
+int chipmunk_space_setIterations(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    int iterations = pd->lua->getArgInt(2);
+    cpSpaceSetIterations(space, iterations);
+    return 0;
+}
+
+int chipmunk_space_getSleepTimeThreshold(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    float sleepTimeThreshold = cpSpaceGetSleepTimeThreshold(space);
+    pd->lua->pushFloat(sleepTimeThreshold);
+    return 2;
+}
+
+int chipmunk_space_setSleepTimeThreshold(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    float sleepTimeThreshold = pd->lua->getArgFloat(2);
+    cpSpaceSetSleepTimeThreshold(space, sleepTimeThreshold);
+    return 0;
+}
+
+int chipmunk_space_getCollisionSlop(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    float collisionSlop = cpSpaceGetCollisionSlop(space);
+    pd->lua->pushFloat(collisionSlop);
+    return 2;
+}
+
+int chipmunk_space_setCollisionSlop(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    float collisionSlop = pd->lua->getArgFloat(2);
+    cpSpaceSetCollisionSlop(space, collisionSlop);
+    return 0;
+}
+
+int chipmunk_space_step(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    float dt = pd->lua->getArgFloat(2);
+    cpSpaceStep(space, dt);
+    return 0;
+}
+
+int chipmunk_space_addShape(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    cpShape* shape = getShapeArg(2);
+    cpSpaceAddShape(space, shape); //TODO: expose retval?
+    return 0;
+}
+
+int chipmunk_space_addBody(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    cpBody* body = getBodyArg(2);
+    cpSpaceAddShape(space, shape); //TODO: expose retval?
+    return 0;
+}
+
+int chipmunk_space_removeShape(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    cpShape* shape = getShapeArg(2);
+    cpSpaceRemoveShape(space, shape);
+    return 0;
+}
+
+int chipmunk_space_removeBody(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    cpBody* body = getBodyArg(2);
+    cpSpaceRemoveBody(space, body);
+    return 0;
+}
+
 static const lua_reg spaceClass[] = {
     {"new", chipmunk_space_new },
     {"__gc", chipmunk_space_delete},
 //properties
     {"getGravity", chipmunk_space_getGravity},
     {"setGravity", chipmunk_space_setGravity},
+    {"getDamping", chipmunk_space_getDamping},
+    {"setDamping", chipmunk_space_setDamping},
+    {"getIterations", chipmunk_space_getIterations},
+    {"setIterations", chipmunk_space_setIterations},
+    {"setSleepTimeThreshold", chipmunk_space_setSleepTimeThreshold},
+    {"getSleepTimeThreshold", chipmunk_space_getSleepTimeThreshold},
+    {"getCollisionSlop", chipmunk_space_getCollisionSlop},
+    {"setCollisionSlop", chipmunk_space_setCollisionSlop},
 //other get/set: 
-//iterations
-//damping
 // idleSpeedThreshold
-// sleepTimeThreshold
-// collisionSlop
 // collisionBias
 // collisionPersistence
 // userData
@@ -77,13 +164,23 @@ static const lua_reg spaceClass[] = {
 // staticBody
 //methods
     {"step", chipmunk_space_step},
-    // {"addShape", chipmunk_space_addShape},
-    // {"addBody", chipmunk_space_addBody},
+    {"addShape", chipmunk_space_addShape},
+    {"addBody", chipmunk_space_addBody},
     // {"addConstraint", chipmunk_space_addConstraint},
-    // {"removeShape", chipmunk_space_removeShape},
-    // {"removeBody", chipmunk_space_removeBody},
+    {"removeShape", chipmunk_space_removeShape},
+    {"removeBody", chipmunk_space_removeBody},
     // {"removeConstraint", chipmunk_space_removeConstraint},
     {NULL, NULL}
+};
+
+//SHAPE
+static const lua_reg shapeClass[] = {
+
+};
+
+//BODY
+static const lua_reg bodyClass[] = {
+
 };
 
 void registerChipmunk(PlaydateAPI* playdate)
@@ -96,15 +193,15 @@ void registerChipmunk(PlaydateAPI* playdate)
         return;
     }
 
-    // if (!pd->lua->registerClass(CLASSNAME_BODY, bodyClass, NULL, 0, &err)) {
-    //     pb_log("chipmunk: failed to register body class. %s", err);
-    //     return;
-    // }
+    if (!pd->lua->registerClass(CLASSNAME_BODY, bodyClass, NULL, 0, &err)) {
+        pb_log("chipmunk: failed to register body class. %s", err);
+        return;
+    }
 
-    // if (!pd->lua->registerClass(CLASSNAME_SHAPE, shapeClass, NULL, 0, &err)) {
-    //     pb_log("chipmunk: failed to register shape class. %s", err);
-    //     return;
-    // }
+    if (!pd->lua->registerClass(CLASSNAME_SHAPE, shapeClass, NULL, 0, &err)) {
+        pb_log("chipmunk: failed to register shape class. %s", err);
+        return;
+    }
 
 //    if (!pd->lua->registerClass(CLASSNAME_CONSTRAINT, constraintClass, NULL, 0, &err)) {
 //        pb_log("chipmunk: failed to register constraint class. %s", err);
