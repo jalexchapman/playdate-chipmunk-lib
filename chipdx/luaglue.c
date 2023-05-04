@@ -207,6 +207,20 @@ int chipmunk_shape_delete(lua_State* L){
     //TODO: make sure we don't have to delete contents first
 }
 
+
+int chipmunk_shape_getFriction(lua_State* L){
+    cpShape *shape = getShapeArg(1);
+    pd->lua->pushFloat(cpShapeGetFriction(shape));
+    return 1;
+}
+
+int chipmunk_shape_setFriction(lua_State* L){
+    cpShape *shape = getShapeArg(1);
+    cpFloat friction = pd->lua->getArgFloat(2);
+    cpShapeSetFriction(shape, friction);
+    return 0;
+}
+
 int chipmunk_shape_newCircle(lua_State* L){
     cpBody *body = getBodyArg(1);
     cpFloat radius = pd->lua->getArgFloat(2);
@@ -236,6 +250,8 @@ static const lua_reg shapeClass[] = {
     //cpFloat cpShapeGetMass(*shape)
     //void cpShapeSetMass(*shape, cpFloat mass)
     //cpFloat cpShapeGetMoment(*shape)
+    {"getFriction", chipmunk_shape_getFriction},
+    {"setFriction", chipmunk_shape_setFriction},
     //cpFloat cpShapeGetFriction(*shape)
     //void cpShapeSetFriction(*shape, cpFloat)
     {"newCircle", chipmunk_shape_newCircle},
@@ -245,9 +261,91 @@ static const lua_reg shapeClass[] = {
     
 };
 
-//BODY
-static const lua_reg bodyClass[] = {
 
+//BODY
+//cpSpace
+int chipmunk_body_new(lua_State* L){
+    cpFloat mass = pd->lua->getArgFloat(1);
+    cpFloat moment = pd->lua->getArgFloat(2);
+    cpBody* body = cpBodyNew(mass, moment);
+    pd->lua->pushObject(body, CLASSNAME_BODY, 0);
+    return 1;
+}
+
+int chipmunk_body_delete(lua_State* L){
+    cpBodyFree(getBodyArg(1));
+    return 0;
+}
+
+int chipmunk_body_getPosition(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    cpVect pos = cpBodyGetPosition(body);
+    pd->lua->pushFloat((float) pos.x);
+    pd->lua->pushFloat((float) pos.y);
+    return 2;
+}
+
+int chipmunk_body_setPosition(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    float posX = pd->lua->getArgFloat(2);
+    float posY = pd->lua->getArgFloat(3);
+    cpBodySetPosition(body, cpv(posX, posY));
+    return 0;
+}
+
+int chipmunk_body_getAngle(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    pd->lua->pushFloat((float) cpBodyGetAngle(body));
+    return 1;
+}
+
+int chipmunk_body_setAngle(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    cpFloat angle = pd->lua->getArgFloat(2);
+    cpBodySetAngle(body, angle);
+    return 0;
+}
+
+int chipmunk_body_getForce(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    cpVect f = cpBodyGetForce(body);
+    pd->lua->pushFloat((float) f.x);
+    pd->lua->pushFloat((float) f.y);
+    return 2;
+}
+
+int chipmunk_body_setForce(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    float fX = pd->lua->getArgFloat(2);
+    float fY = pd->lua->getArgFloat(3);
+    cpBodySetPosition(body, cpv(fX, fY));
+    return 0;
+}
+
+int chipmunk_body_getTorque(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    pd->lua->pushFloat((float) cpBodyGetTorque(body));
+    return 1;
+}
+
+int chipmunk_body_setTorque(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    cpFloat torque = pd->lua->getArgFloat(2);
+    cpBodySetTorque(body, torque);
+    return 0;
+}
+
+static const lua_reg bodyClass[] = {
+    {"__gc", chipmunk_body_delete},
+    {"new", chipmunk_body_new},
+    {"getPosition", chipmunk_body_getPosition},
+    {"setPosition", chipmunk_body_setPosition},
+    {"getAngle", chipmunk_body_getAngle},
+    {"setAngle", chipmunk_body_setAngle},
+    {"getForce", chipmunk_body_getForce},
+    {"setForce", chipmunk_body_setForce},
+    {"getTorque", chipmunk_body_getTorque},
+    {"setTorque", chipmunk_body_setTorque}
 };
 
 void registerChipmunk(PlaydateAPI* playdate)
