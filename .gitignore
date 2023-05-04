@@ -64,3 +64,5 @@ build/
 
 #mac gunk
 .DS_Store
+
+.clangd

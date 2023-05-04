@@ -6,8 +6,10 @@
 #include "luaglue.h"
 #include "chipmunk.h"
 
+
 static PlaydateAPI* pd = NULL;
 
+#define CLASSNAME_CHIPMUNK "chipmunk"
 #define CLASSNAME_SPACE "chipmunk.space"
 #define CLASSNAME_BODY "chipmunk.body"
 #define CLASSNAME_SHAPE "chipmunk.shape"
@@ -18,6 +20,22 @@ static cpSpace* getSpaceArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_S
 static cpBody* getBodyArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_BODY, NULL); }
 static cpShape* getShapeArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_SHAPE, NULL); }
 // static cpConstraint* getConstraintArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_CONSTRAINT, NULL); }
+
+//chipmunk (helpers)
+int chipmunk_momentForCircle(lua_State* L)
+{
+    cpFloat m = pd->lua->getArgFloat(1);
+    cpFloat r1 = pd->lua->getArgFloat(2);
+    cpFloat r2 = pd->lua->getArgFloat(3);
+    cpFloat xOffset = pd->lua->getArgFloat(4);
+    cpFloat yOffset = pd->lua->getArgFloat(5);
+    pd->lua->pushFloat((float) cpMomentForCircle(m, r1, r2, cpv(xOffset, yOffset)));
+    return 1;
+}
+
+static const lua_reg chipmunkClass[] = {
+    {"momentForCircle", chipmunk_momentForCircle }
+};
 
 //cpSpace
 int chipmunk_space_new(lua_State* L){
@@ -52,7 +70,7 @@ int chipmunk_space_getDamping(lua_State* L){
     cpSpace* space = getSpaceArg(1);
     float damping = cpSpaceGetDamping(space);
     pd->lua->pushFloat(damping);
-    return 2;
+    return 1;
 }
 
 int chipmunk_space_setDamping(lua_State* L){
@@ -66,7 +84,7 @@ int chipmunk_space_getIterations(lua_State* L){
     cpSpace* space = getSpaceArg(1);
     int iterations = cpSpaceGetIterations(space);
     pd->lua->pushFloat(iterations);
-    return 2;
+    return 1;
 }
 
 int chipmunk_space_setIterations(lua_State* L){
@@ -80,7 +98,7 @@ int chipmunk_space_getSleepTimeThreshold(lua_State* L){
     cpSpace* space = getSpaceArg(1);
     float sleepTimeThreshold = cpSpaceGetSleepTimeThreshold(space);
     pd->lua->pushFloat(sleepTimeThreshold);
-    return 2;
+    return 1;
 }
 
 int chipmunk_space_setSleepTimeThreshold(lua_State* L){
@@ -94,7 +112,7 @@ int chipmunk_space_getCollisionSlop(lua_State* L){
     cpSpace* space = getSpaceArg(1);
     float collisionSlop = cpSpaceGetCollisionSlop(space);
     pd->lua->pushFloat(collisionSlop);
-    return 2;
+    return 1;
 }
 
 int chipmunk_space_setCollisionSlop(lua_State* L){
@@ -102,6 +120,13 @@ int chipmunk_space_setCollisionSlop(lua_State* L){
     float collisionSlop = pd->lua->getArgFloat(2);
     cpSpaceSetCollisionSlop(space, collisionSlop);
     return 0;
+}
+
+int chipmunk_space_getStaticBody(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    cpBody* body = cpSpaceGetStaticBody(space);
+    pd->lua->pushObject(body, CLASSNAME_BODY, 0);
+    return 1;
 }
 
 int chipmunk_space_step(lua_State* L){
@@ -121,7 +146,7 @@ int chipmunk_space_addShape(lua_State* L){
 int chipmunk_space_addBody(lua_State* L){
     cpSpace* space = getSpaceArg(1);
     cpBody* body = getBodyArg(2);
-    cpSpaceAddShape(space, shape); //TODO: expose retval?
+    cpSpaceAddBody(space, body); //TODO: expose retval?
     return 0;
 }
 
@@ -161,21 +186,63 @@ static const lua_reg spaceClass[] = {
 //get only:
 // currentTimeStep
 // isLocked
-// staticBody
+    {"getStaticBody", chipmunk_space_getStaticBody},
 //methods
     {"step", chipmunk_space_step},
     {"addShape", chipmunk_space_addShape},
     {"addBody", chipmunk_space_addBody},
     // {"addConstraint", chipmunk_space_addConstraint},
     {"removeShape", chipmunk_space_removeShape},
+    
+    
     {"removeBody", chipmunk_space_removeBody},
     // {"removeConstraint", chipmunk_space_removeConstraint},
     {NULL, NULL}
 };
 
 //SHAPE
-static const lua_reg shapeClass[] = {
+int chipmunk_shape_delete(lua_State* L){
+    cpShapeFree(getShapeArg(1));
+    return 0;
+    //TODO: make sure we don't have to delete contents first
+}
 
+int chipmunk_shape_newCircle(lua_State* L){
+    cpBody *body = getBodyArg(1);
+    cpFloat radius = pd->lua->getArgFloat(2);
+    cpFloat xOffset = pd->lua->getArgFloat(3);
+    cpFloat yOffset = pd->lua->getArgFloat(4);
+    cpShape* shape = cpCircleShapeNew(body, radius, cpv(xOffset, yOffset));
+    pd->lua->pushObject(shape, CLASSNAME_SHAPE, 0);
+    return 1;
+}
+
+int chipmunk_shape_newSegment(lua_State* L){
+    cpBody *body = getBodyArg(1);
+    cpFloat xA = pd->lua->getArgFloat(2);
+    cpFloat yA = pd->lua->getArgFloat(3);
+    cpFloat xB = pd->lua->getArgFloat(4);
+    cpFloat yB = pd->lua->getArgFloat(5);
+    cpFloat radius = pd->lua->getArgFloat(6);
+    cpShape* shape = cpSegmentShapeNew(body, cpv(xA, yA), cpv(xB, yB), radius);
+    pd->lua->pushObject(shape, CLASSNAME_SHAPE, 0);
+    return 1;   
+}
+
+static const lua_reg shapeClass[] = {
+    {"__gc", chipmunk_shape_delete},
+    //cpBody* cpShapeGetBody(*shape)
+    //void cpShapeSetBody(*shape, *body)
+    //cpFloat cpShapeGetMass(*shape)
+    //void cpShapeSetMass(*shape, cpFloat mass)
+    //cpFloat cpShapeGetMoment(*shape)
+    //cpFloat cpShapeGetFriction(*shape)
+    //void cpShapeSetFriction(*shape, cpFloat)
+    {"newCircle", chipmunk_shape_newCircle},
+    {"newSegment", chipmunk_shape_newSegment}
+    //cpCircleShapeGetOffset
+    //cpCircleShapeGetRadius
+    
 };
 
 //BODY
@@ -188,18 +255,23 @@ void registerChipmunk(PlaydateAPI* playdate)
     pd = playdate;
     const char* err;
 
+    if (!pd->lua->registerClass(CLASSNAME_CHIPMUNK, chipmunkClass, NULL, 0, &err)) {
+        pd->system->logToConsole("chipmunk: failed to register chipmunk class. %s", err);
+        return;
+    }
+
     if (!pd->lua->registerClass(CLASSNAME_SPACE, spaceClass, NULL, 0, &err)) {
         pd->system->logToConsole("chipmunk: failed to register space class. %s", err);
         return;
     }
 
     if (!pd->lua->registerClass(CLASSNAME_BODY, bodyClass, NULL, 0, &err)) {
-        pb_log("chipmunk: failed to register body class. %s", err);
+        pd->system->logToConsole("chipmunk: failed to register body class. %s", err);
         return;
     }
 
     if (!pd->lua->registerClass(CLASSNAME_SHAPE, shapeClass, NULL, 0, &err)) {
-        pb_log("chipmunk: failed to register shape class. %s", err);
+        pd->system->logToConsole("chipmunk: failed to register shape class. %s", err);
         return;
     }
 
