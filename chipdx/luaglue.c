@@ -221,6 +221,20 @@ int chipmunk_shape_setFriction(lua_State* L){
     return 0;
 }
 
+int chipmunk_shape_getElasticity(lua_State* L){
+    cpShape *shape = getShapeArg(1);
+    pd->lua->pushFloat(cpShapeGetElasticity(shape));
+    return 1;
+}
+
+int chipmunk_shape_setElasticity(lua_State* L){
+    cpShape *shape = getShapeArg(1);
+    cpFloat elasticity = pd->lua->getArgFloat(2);
+    cpShapeSetElasticity(shape, elasticity);
+    return 0;
+}
+
+
 int chipmunk_shape_newCircle(lua_State* L){
     cpBody *body = getBodyArg(1);
     cpFloat radius = pd->lua->getArgFloat(2);
@@ -268,6 +282,8 @@ static const lua_reg shapeClass[] = {
     //cpFloat cpShapeGetMoment(*shape)
     {"getFriction", chipmunk_shape_getFriction},
     {"setFriction", chipmunk_shape_setFriction},
+    {"getElasticity", chipmunk_shape_getElasticity},
+    {"setElasticity", chipmunk_shape_setElasticity},
     {"getCircleRadius", chipmunk_shape_getCircleRadius},
     {"getCircleOffset", chipmunk_shape_getCircleOffset},
     //cpFloat cpShapeGetFriction(*shape)

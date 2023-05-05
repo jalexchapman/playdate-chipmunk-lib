@@ -1,5 +1,6 @@
 import 'CoreLibs/sprites.lua'
 import 'CoreLibs/graphics.lua'
+import 'CoreLibs/object.lua'
 
 
 local gfx = playdate.graphics
@@ -31,11 +32,14 @@ function addRandomCircle()
     local radius = math.random(2, 10)
     local piDensity = 0.01
     local mass = piDensity * radius^2
-    local friction = 0.5
+    local friction = 0.3
+    local elasticity = 0.5
     local moment = chipmunk.momentForCircle(mass, radius, 0, 0, 0)
     local body = chipmunk.body.new(mass, moment)
     local shape = chipmunk.shape.newCircle(body, radius, 0, 0)
     body:setPosition(math.random(radius + 1, 399 - radius), math.random(radius + 1, 239 - radius))
+    shape:setFriction(friction)
+    shape:setElasticity(elasticity)
     space:addBody(body)
     space:addShape(shape)
     table.insert(circleBodies, body)
@@ -49,6 +53,10 @@ function drawCircles()
         local angle = circleBodies[i]:getAngle()
         gfx.setColor(gfx.kColorBlack)
         gfx.fillCircleAtPoint(x, y, r)
+        gfx.setColor(gfx.kColorWhite)
+        local xOff = math.cos(angle) * r
+        local yOff = math.sin(angle) * r
+        gfx.drawLine(x + xOff, y + yOff, x - xOff, y - yOff)
     end
 end
 
@@ -56,7 +64,7 @@ function setup()
     playdate.display.setRefreshRate(50)
     space = chipmunk.space.new()
     space:setDamping(1.0)
-    space:setGravity(0, 30.0)
+    space:setGravity(0, 400.0)
     staticBody = space:getStaticBody()
     
     wallSegments = {
