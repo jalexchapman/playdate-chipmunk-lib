@@ -243,6 +243,22 @@ int chipmunk_shape_newSegment(lua_State* L){
     return 1;   
 }
 
+int chipmunk_shape_getCircleRadius(lua_State* L){
+    cpShape *shape = getShapeArg(1);
+    pd->lua->pushFloat(cpCircleShapeGetRadius(shape));
+    return 1;
+}
+
+int chipmunk_shape_getCircleOffset(lua_State* L){
+    cpShape *shape = getShapeArg(1);
+    cpVect offset = cpCircleShapeGetOffset(shape);
+    pd->lua->pushFloat((float) offset.x);
+    pd->lua->pushFloat((float) offset.y);
+    return 2;
+}
+
+
+
 static const lua_reg shapeClass[] = {
     {"__gc", chipmunk_shape_delete},
     //cpBody* cpShapeGetBody(*shape)
@@ -252,6 +268,8 @@ static const lua_reg shapeClass[] = {
     //cpFloat cpShapeGetMoment(*shape)
     {"getFriction", chipmunk_shape_getFriction},
     {"setFriction", chipmunk_shape_setFriction},
+    {"getCircleRadius", chipmunk_shape_getCircleRadius},
+    {"getCircleOffset", chipmunk_shape_getCircleOffset},
     //cpFloat cpShapeGetFriction(*shape)
     //void cpShapeSetFriction(*shape, cpFloat)
     {"newCircle", chipmunk_shape_newCircle},
