@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include "pdcalloc.h"
 
 #ifndef alloca
 	#ifdef _WIN32
@@ -69,7 +70,7 @@ CP_EXPORT void cpMessage(const char *condition, const char *file, int line, int 
 
 #ifndef cpcalloc
 	/// Chipmunk calloc() alias.
-	#define cpcalloc calloc
+	#define cpcalloc pdcalloc
 #endif
 
 #ifndef cprealloc

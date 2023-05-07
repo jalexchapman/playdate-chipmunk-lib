@@ -19,6 +19,7 @@ VPATH += chipmunk/include/chipmunk
 
 # List C source files here
 SRC = \
+	chipdx/pdcalloc.c \
 	chipdx/main.c \
 	chipdx/luaglue.c \
 	chipmunk/src/chipmunk.c \
@@ -61,7 +62,7 @@ ASRC = setup.s
 UINCDIR = chipdx chipmunk/include chipmunk/include/chipmunk
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = -DCP_USE_DOUBLES=0 -DCP_USE_CGTYPES=0
+UDEFS = -DCP_USE_DOUBLES=0 -DCP_USE_CGTYPES=0 -fsingle-precision-constant
 
 # Define ASM defines here
 UADEFS =
