@@ -53,6 +53,7 @@ dkms.conf
 
 Source/*.bin
 ChipmunkLibrary.pdx/
+ChipmunkLibrary.pdx.zip
 
 #IDE gunk
 .vscode/

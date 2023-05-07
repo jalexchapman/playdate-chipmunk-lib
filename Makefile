@@ -19,6 +19,7 @@ VPATH += chipmunk/include/chipmunk
 
 # List C source files here
 SRC = \
+	chipdx/pdcalloc.c \
 	chipdx/main.c \
 	chipdx/luaglue.c \
 	chipmunk/src/chipmunk.c \

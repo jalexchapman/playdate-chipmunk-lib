@@ -36,6 +36,8 @@ function addRandomCircle()
     local elasticity = 0.5
     local moment = chipmunk.momentForCircle(mass, radius, 0, 0, 0)
     local body = chipmunk.body.new(mass, moment)
+    print body:getMass()
+    print body:getMoment()
     local shape = chipmunk.shape.newCircle(body, radius, 0, 0)
     body:setPosition(math.random(radius + 1, 399 - radius), math.random(radius + 1, 239 - radius))
     shape:setFriction(friction)
@@ -75,9 +77,11 @@ function setup()
     }
     
     for _, segment in ipairs(wallSegments) do
+        segment:setFriction(0.3)
+        segment:setElasticity(0.5)
         space:addShape(segment)
     end
-    for i=1, 50 do
+    for i=1, 3 do
         addRandomCircle()
     end
     drawCircles()
