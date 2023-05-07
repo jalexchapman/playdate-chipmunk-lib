@@ -271,6 +271,11 @@ int chipmunk_shape_getCircleOffset(lua_State* L){
     return 2;
 }
 
+int chipmunk_shape_getBody(lua_State* L){
+    cpShape *shape = getShapeArg(1);
+    pd->lua->pushObject(cpShapeGetBody(shape), CLASSNAME_BODY, 0);
+    return 1;
+}
 
 
 static const lua_reg shapeClass[] = {
@@ -286,6 +291,7 @@ static const lua_reg shapeClass[] = {
     {"setElasticity", chipmunk_shape_setElasticity},
     {"getCircleRadius", chipmunk_shape_getCircleRadius},
     {"getCircleOffset", chipmunk_shape_getCircleOffset},
+    {"getBody", chipmunk_shape_getBody},
     //cpFloat cpShapeGetFriction(*shape)
     //void cpShapeSetFriction(*shape, cpFloat)
     {"newCircle", chipmunk_shape_newCircle},
@@ -302,6 +308,26 @@ int chipmunk_body_new(lua_State* L){
     cpFloat mass = pd->lua->getArgFloat(1);
     cpFloat moment = pd->lua->getArgFloat(2);
     cpBody* body = cpBodyNew(mass, moment);
+    pd->lua->pushObject(body, CLASSNAME_BODY, 0);
+    return 1;
+}
+
+int chipmunk_body_newDynamic(lua_State* L){
+    cpFloat mass = pd->lua->getArgFloat(1);
+    cpFloat moment = pd->lua->getArgFloat(2);
+    cpBody* body = cpBodyNew(mass, moment);
+    pd->lua->pushObject(body, CLASSNAME_BODY, 0);
+    return 1;
+}
+
+int chipmunk_body_newKinematic(lua_State* L){
+    cpBody* body = cpBodyNewKinematic();
+    pd->lua->pushObject(body, CLASSNAME_BODY, 0);
+    return 1;
+}
+
+int chipmunk_body_newStatic(lua_State* L){
+    cpBody* body = cpBodyNewStatic();
     pd->lua->pushObject(body, CLASSNAME_BODY, 0);
     return 1;
 }
@@ -369,9 +395,24 @@ int chipmunk_body_setTorque(lua_State* L){
     return 0;
 }
 
+int chipmunk_body_getMass(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    pd->lua->pushFloat((float) cpBodyGetMass(body));
+    return 1;
+}
+
+int chipmunk_body_getMoment(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    pd->lua->pushFloat((float) cpBodyGetMoment(body));
+    return 1;
+}
+
 static const lua_reg bodyClass[] = {
     {"__gc", chipmunk_body_delete},
     {"new", chipmunk_body_new},
+    {"newDynamic", chipmunk_body_newDynamic},
+    {"newKinematic", chipmunk_body_newKinematic},
+    {"newStatic", chipmunk_body_newStatic},
     {"getPosition", chipmunk_body_getPosition},
     {"setPosition", chipmunk_body_setPosition},
     {"getAngle", chipmunk_body_getAngle},
@@ -379,7 +420,9 @@ static const lua_reg bodyClass[] = {
     {"getForce", chipmunk_body_getForce},
     {"setForce", chipmunk_body_setForce},
     {"getTorque", chipmunk_body_getTorque},
-    {"setTorque", chipmunk_body_setTorque}
+    {"setTorque", chipmunk_body_setTorque},
+    {"getMass", chipmunk_body_getMass},
+    {"getMoment", chipmunk_body_getMoment}
 };
 
 void registerChipmunk(PlaydateAPI* playdate)
