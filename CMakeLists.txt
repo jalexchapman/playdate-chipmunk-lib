@@ -24,6 +24,13 @@ endif()
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
 
+add_compile_definitions(CP_USE_DOUBLES=0)
+add_compile_definitions(CP_USE_CGTYPES=0)
+
+add_compile_options(-fsingle-precision-constant)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCP_USE_DOUBLES=0 -DCP_USE_CGTYPES=0 -fsingle-precision-constant")
+
 # Game Name Customization
 set(PLAYDATE_GAME_NAME playdate-chipmunk-lib)
 set(PLAYDATE_GAME_DEVICE playdate-chipmunk-lib_DEVICE)
@@ -44,9 +51,9 @@ file(GLOB LUA_CODE
 )
 
 include_directories(
-    "chipmunk"
-    "chipmunk/include/chipmunk"
-    "chipdx"
+	"chipmunk/include"
+	"chipmunk/include/chipmunk"
+	"chipdx"
 )
 
 if (TOOLCHAIN STREQUAL "armgcc")
