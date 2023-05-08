@@ -33,7 +33,7 @@ project(${PLAYDATE_GAME_NAME} C ASM)
 file(GLOB CHIPMUNK_LIB_GLOB
     "chipdx/*.h"
     "chipdx/*.c"
-    "chipmunk/include/*.h"
+    "chipmunk/include/chipmunk/*.h"
     "chipmunk/src/*.h"
     "chipmunk/src/*.c"
 
