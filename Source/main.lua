@@ -1,23 +1,21 @@
 import 'CoreLibs/sprites.lua'
 import 'CoreLibs/graphics.lua'
 import 'CoreLibs/object.lua'
-
+import "disc"
+import "world"
 
 local gfx = playdate.graphics
-
 gfx.setColor(gfx.kColorBlack)
 
 local world_setup = false
-local space = nil
 
 kGravityMagnitude=6778
 
 --kGravityMagnitude = 66778 -- 9.8 m/s^2, 173 ppi = 6811 px/m
 gravity = {x=0, y=kGravityMagnitude, z=0}
-space = {}
-staticBody = {}
 circleShapes = {}
 wallSegments = {}
+allConstraints = {}
 local lastPhysTime = 0
 local lastGrafTime = 0
 
@@ -26,36 +24,32 @@ function updateGravity()
     gravity.x = x * kGravityMagnitude
     gravity.y = y * kGravityMagnitude
     gravity.z = y * kGravityMagnitude
-    space:setGravity(gravity.x, gravity.y)
+    World.space:setGravity(gravity.x, gravity.y)
 end
 
 function addRandomCircle()
     local radius = math.random(5, 30)
-    local piDensity = 0.01
-    local mass = piDensity * radius^2
+    local density = 0.003
     local friction = 0.3
     local elasticity = 0.5
-    local moment = chipmunk.momentForCircle(mass, radius, 0, 0, 0)
-    --print(space)
-    --local body = chipmunk.body.new(mass, moment)
-    local body = chipmunk.body.newDynamic(mass, moment)
-    --print(body)
-    local shape = chipmunk.shape.newCircle(body, radius, 0, 0)
-    --print(shape:getBody())
-    --print(shape)
-    body:setPosition(math.random(radius + 1, 399 - radius), math.random(radius + 1, 239 - radius))
-    shape:setFriction(friction)
-    shape:setElasticity(elasticity)
-    space:addBody(body)
-    space:addShape(shape)
-    table.insert(circleShapes, shape)
+    local x = math.random(radius + 1, 399 - radius)
+    local y = math.random(radius + 1, 239 - radius)
+
+    local newDisc = Disc(x, y, radius, density, friction, elasticity)
+    if (newDisc ~= nil) then
+        printTable(newDisc)
+        newDisc:addSprite()
+    else
+        print("newDisc seems to be nil?")
+    end
 end
 
-function newPeg(r, x, y, parentSpace)
-    local shape = chipmunk.shape.newCircle(parentSpace:getStaticBody(), r, x, y)
+function newPeg(r, x, y)
+    local shape = chipmunk.shape.newCircle(World.staticBody, r, x, y)
     shape:setFriction(0.6)
-    shape:setElasticity(0.7)
-    parentSpace:addShape(shape)
+    shape:setElasticity(0.7)    
+    World.space:addShape(shape)
+    local body = World.staticBody
     return shape
 end
 
@@ -63,10 +57,10 @@ function addPegs()
     local radius = 3.0
     for i=80,320,160 do
         for j =80,160,80 do
-            table.insert(circleShapes, newPeg(radius, i, j, space))
+            table.insert(circleShapes, newPeg(radius, i, j))
         end
         for k=40,200,80 do
-            table.insert(circleShapes, newPeg(radius, i+80, k, space))
+            table.insert(circleShapes, newPeg(radius, i+80, k))
         end
     end
 end
@@ -96,28 +90,29 @@ end
 function setup()
     playdate.startAccelerometer()
     playdate.display.setRefreshRate(50)
-    space = chipmunk.space.new()
-    space:setDamping(1.0)
-    space:setGravity(0, 400.0)
-    staticBody = space:getStaticBody()
+    World:setup()
     
     wallSegments = {
-        chipmunk.shape.newSegment(staticBody,0,0,400,0,2),
-        chipmunk.shape.newSegment(staticBody,0,240,400,240,2),
-        chipmunk.shape.newSegment(staticBody,0,0,0,240,2),
-        chipmunk.shape.newSegment(staticBody,400,0,400,240,2)
+        chipmunk.shape.newSegment(World.staticBody,-20,-20,420,-20,20),
+        chipmunk.shape.newSegment(World.staticBody,-20,260,420,260,20),
+        chipmunk.shape.newSegment(World.staticBody,-20,-20,-20,260,20),
+        chipmunk.shape.newSegment(World.staticBody,420,-20,420,260,20)
     }
     
     for _, segment in ipairs(wallSegments) do
         segment:setFriction(0.3)
         segment:setElasticity(0.5)
-        space:addShape(segment)
+        printTable(World.space)
+        World.space:addShape(segment)
     end
-    for i=1,15 do
+    for i=1,10 do
         addRandomCircle()
     end
-    addPegs()
-    drawCircles()
+    --addPegs()
+    --drawCircles()
+    gfx.setBackgroundColor(gfx.kColorWhite)
+    gfx.setColor(gfx.kColorWhite)
+    gfx.fillRect(0,0,400,240)
     lastPhysTime = playdate.getCurrentTimeMilliseconds()
     lastGrafTime = lastPhysTime
     world_setup = true
@@ -129,11 +124,13 @@ function playdate.update()
     end
     local now = playdate.getCurrentTimeMilliseconds()
     local dt = (now - lastPhysTime)/1000
+    if dt > 100 then dt = 100 end -- just do slowdown at 10fps or slower to avoid glitching
     gfx.setColor(gfx.kColorWhite)
-    gfx.fillRect(0,0,400,240)
+    gfx.fillRect(0,0,400,240) --FIXME - failing to update without this right now
     updateGravity()
-    space:step(dt)
-    drawCircles()
+    World.space:step(dt)
+    gfx.sprite.update()
+    --drawCircles()
     lastPhysTime = now
     lastGrafTime = now
     playdate.drawFPS(0,0)
