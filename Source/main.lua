@@ -16,6 +16,7 @@ gravity = {x=0, y=kGravityMagnitude, z=0}
 circleShapes = {}
 wallSegments = {}
 allConstraints = {}
+discs = {}
 local lastPhysTime = 0
 local lastGrafTime = 0
 
@@ -37,11 +38,12 @@ function addRandomCircle()
 
     local newDisc = Disc(x, y, radius, density, friction, elasticity)
     if (newDisc ~= nil) then
-        printTable(newDisc)
+        -- printTable(newDisc)
         newDisc:addSprite()
     else
         print("newDisc seems to be nil?")
     end
+    return newDisc
 end
 
 function newPeg(r, x, y)
@@ -106,10 +108,8 @@ function setup()
         World.space:addShape(segment)
     end
     for i=1,10 do
-        addRandomCircle()
+        table.insert(discs, addRandomCircle())
     end
-    --addPegs()
-    --drawCircles()
     gfx.setBackgroundColor(gfx.kColorWhite)
     gfx.setColor(gfx.kColorWhite)
     gfx.fillRect(0,0,400,240)
@@ -118,20 +118,38 @@ function setup()
     world_setup = true
 end
 
+local perfStats = {samples=0, dtMax=0, dtMin = math.huge, dtAvg = 0}
+
+local function updatePerf(dt)
+    local agg = perfStats.samples * perfStats.dtAvg
+    perfStats.samples = perfStats.samples + 1
+    agg = agg + dt
+    perfStats.dtAvg = agg/perfStats.samples
+    if 0 < dt and dt < perfStats.dtMin then perfStats.dtMin = dt end
+    if dt > perfStats.dtMax then perfStats.dtMax = dt end
+end
+
+local function drawPerf(x, y)
+    gfx.drawText(string.format( -- draw perf
+    "min dt: %e\nmax dt: %e\nmean dt: %e",
+    perfStats.dtMin, perfStats.dtMax, perfStats.dtAvg),x,y)
+end
+
 function playdate.update() 
     if not world_setup then
         setup()
     end
     local now = playdate.getCurrentTimeMilliseconds()
     local dt = (now - lastPhysTime)/1000
-    if dt > 100 then dt = 100 end -- just do slowdown at 10fps or slower to avoid glitching
-    gfx.setColor(gfx.kColorWhite)
-    gfx.fillRect(0,0,400,240) --FIXME - failing to update without this right now
+    --if dt > 50 then dt = 50 end -- minimum physics update 20Hz, slowdown instead after that
+    --updatePerf(dt)
+    --drawPerf(25,0)
+    --playdate.drawFPS(0,0)
     updateGravity()
     World.space:step(dt)
     gfx.sprite.update()
-    --drawCircles()
-    lastPhysTime = now
+   lastPhysTime = now
     lastGrafTime = now
-    playdate.drawFPS(0,0)
+ 
+    
 end

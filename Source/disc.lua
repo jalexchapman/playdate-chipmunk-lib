@@ -57,6 +57,7 @@ function Disc:removeSprite()
     World.space:removeShape(self._shape)
     World.space:removeBody(self._body)
     Disc.super.removeSprite(self)
+    print("Disc:removeSprite()")
 end
 
 function Disc:updateDrag()
@@ -65,10 +66,13 @@ end
 function Disc:updateFriction()
 end
 
-
-function Disc:draw()
+function Disc:update()
     local x, y = self._body:getPosition()
     self:moveTo(x,y)
+
+end
+
+function Disc:draw()
     gfx.setColor(gfx.kColorBlack)
     gfx.fillCircleAtPoint(self.radius, self.radius, self.radius)
     local a = self._body:getAngle()
