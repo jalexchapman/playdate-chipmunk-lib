@@ -7,7 +7,6 @@ local gfx = playdate.graphics
 
 class('Disc').extends(gfx.sprite)
 
-
 function Disc:init(x, y, radius, density, friction, elasticity)
     Disc.super.init(self)
 
@@ -15,6 +14,7 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     self.density = density
     self.friction = friction
     self.elasticity = elasticity
+    self.angle = 0
     self.mass = math.pi * radius^2 * density
     self.moment = chipmunk.momentForCircle(self.mass, radius, 0, 0, 0)
 
@@ -67,15 +67,26 @@ function Disc:updateFriction()
 end
 
 function Disc:update()
+    local a = self._body:getAngle()
     local x, y = self._body:getPosition()
+    --round to nearest int to avoid redrawing subpixel moves
+    a = math.floor(a * 100 + 0.5)/100 --pesky radians
+    x = math.floor(x + 0.5)
+    y = math.floor(y + 0.5)
     self:moveTo(x,y)
+
+    if (a ~= self.angle) then
+        self.angle = a
+        self:markDirty() -- ensure rotation in place
+    end
+    
 
 end
 
 function Disc:draw()
     gfx.setColor(gfx.kColorBlack)
     gfx.fillCircleAtPoint(self.radius, self.radius, self.radius)
-    local a = self._body:getAngle()
+    local a = self.angle
     local r = self.radius
     local xEdge = math.cos(a) * r
     local yEdge = math.sin(a) * r
