@@ -16,7 +16,6 @@ gravity = {x=0, y=kGravityMagnitude, z=0}
 circleShapes = {}
 wallSegments = {}
 allConstraints = {}
-discs = {}
 local lastPhysTime = 0
 local lastGrafTime = 0
 
@@ -46,46 +45,24 @@ function addRandomCircle()
     return newDisc
 end
 
-function newPeg(r, x, y)
-    local shape = chipmunk.shape.newCircle(World.staticBody, r, x, y)
-    shape:setFriction(0.6)
-    shape:setElasticity(0.7)    
-    World.space:addShape(shape)
-    local body = World.staticBody
-    return shape
+function addPeg(r, x, y)
+    local friction = 0.6
+    local elasticity = 0.7
+    local peg = Circle(World.staticBody, x, y, r, friction, elasticity)
+    print("Adding peg size " .. r .. " at " .. x .."," .. y)
+    peg:addSprite()
+    return peg
 end
 
 function addPegs()
     local radius = 3.0
     for i=80,320,160 do
         for j =80,160,80 do
-            table.insert(circleShapes, newPeg(radius, i, j))
+            addPeg(radius, i, j)
         end
         for k=40,200,80 do
-            table.insert(circleShapes, newPeg(radius, i+80, k))
+            addPeg(radius, i+80, k)
         end
-    end
-end
-
-function drawCircles()
-    for i, shape in ipairs(circleShapes) do
-        local body = shape:getBody()
-        local r = shape:getCircleRadius()
-        local x, y = body:getPosition()
-        local a = body:getAngle()
-        local xO, yO = shape:getCircleOffset()
-        if xO then
-            x = x + xO
-        end
-        if yO then
-            y = y + yO
-        end
-        gfx.setColor(gfx.kColorBlack)
-        gfx.fillCircleAtPoint(x, y, r)
-        gfx.setColor(gfx.kColorWhite)
-        local xEdge = math.cos(a) * r
-        local yEdge = math.sin(a) * r
-        gfx.drawLine(x + xEdge, y + yEdge, x - xEdge, y - yEdge)
     end
 end
 
@@ -107,8 +84,9 @@ function setup()
         printTable(World.space)
         World.space:addShape(segment)
     end
+    addPegs()
     for i=1,10 do
-        table.insert(discs, addRandomCircle())
+       addRandomCircle()
     end
     gfx.setBackgroundColor(gfx.kColorWhite)
     gfx.setColor(gfx.kColorWhite)
