@@ -32,12 +32,12 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     end
     self._rotDragConstraint = nil
     self._floorFrictionConstraint = nil
-    -- local floorFricConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
-    -- self._floorFrictionConstraint = floorFricConstraint
-    -- if floorFricConstraint ~= nil then
-    --     floorFricConstraint:setMaxBias(0) -- don't actually pivot
-    --     floorFricConstraint:setMaxForce(0) -- update will set this
-    -- end
+    local floorFricConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
+    self._floorFrictionConstraint = floorFricConstraint
+    if floorFricConstraint ~= nil then
+        floorFricConstraint:setMaxBias(0) -- don't actually pivot
+        floorFricConstraint:setMaxForce(0) -- update will set this
+    end
     self._rotFloorFrictionConstraint = nil
 end
 
