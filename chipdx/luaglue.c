@@ -373,6 +373,15 @@ int chipmunk_body_setAngle(lua_State* L){
     return 0;
 }
 
+int chipmunk_body_getVelocity(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    cpVect v = cpBodyGetVelocity(body);
+    pd->lua->pushFloat((float) v.x);
+    pd->lua->pushFloat((float) v.y);
+    return 2;
+}
+
+
 int chipmunk_body_getForce(lua_State* L){
     cpBody* body = getBodyArg(1);
     cpVect f = cpBodyGetForce(body);
@@ -424,6 +433,7 @@ static const lua_reg bodyClass[] = {
     {"setPosition", chipmunk_body_setPosition},
     {"getAngle", chipmunk_body_getAngle},
     {"setAngle", chipmunk_body_setAngle},
+    {"getVelocity", chipmunk_body_getVelocity},
     {"getForce", chipmunk_body_getForce},
     {"setForce", chipmunk_body_setForce},
     {"getTorque", chipmunk_body_getTorque},
@@ -436,6 +446,18 @@ static const lua_reg bodyClass[] = {
 int chipmunk_constraint_delete(lua_State* L){
     cpConstraintFree(getConstraintArg(1));
     return 0;
+}
+
+int chipmunk_constraint_newPivotJoint(lua_State* L){
+    cpBody *bodyA = getBodyArg(1);
+    cpBody *bodyB = getBodyArg(2);
+    cpFloat anchorAX = pd->lua->getArgFloat(3);
+    cpFloat anchorAY = pd->lua->getArgFloat(4);
+    cpFloat anchorBX = pd->lua->getArgFloat(5);
+    cpFloat anchorBY = pd->lua->getArgFloat(6);
+    cpConstraint* pivot = cpPivotJointNew2(bodyA, bodyB, cpv(anchorAX, anchorAY), cpv(anchorBX, anchorBY));
+    pd->lua->pushObject(pivot, CLASSNAME_CONSTRAINT, 0);
+    return 1;
 }
 
 int chipmunk_constraint_newDampedSpring(lua_State* L){
@@ -456,10 +478,27 @@ int chipmunk_constraint_newDampedSpring(lua_State* L){
     return 1;
 }
 
+int chipmunk_constraint_setMaxBias(lua_State* L){
+    cpConstraint *constraint = getConstraintArg(1);
+    cpFloat maxBias = pd->lua->getArgFloat(2);
+    cpConstraintSetMaxBias(constraint, maxBias);
+    return 0;
+}
+
+int chipmunk_constraint_setMaxForce(lua_State* L){
+    cpConstraint *constraint = getConstraintArg(1);
+    cpFloat maxForce = pd->lua->getArgFloat(2);
+    cpConstraintSetMaxForce(constraint, maxForce);
+    return 0;
+}
+
 
 static const lua_reg constraintClass[] = {
     {"__gc", chipmunk_constraint_delete},
-    {"newDampedSpring", chipmunk_constraint_newDampedSpring}  
+    {"newPivotJoint", chipmunk_constraint_newPivotJoint},
+    {"newDampedSpring", chipmunk_constraint_newDampedSpring},
+    {"setMaxForce", chipmunk_constraint_setMaxForce},
+    {"setMaxBias", chipmunk_constraint_setMaxBias}  
 };
 
 void registerChipmunk(PlaydateAPI* playdate)

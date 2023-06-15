@@ -1,30 +1,26 @@
 import 'CoreLibs/sprites.lua'
 import 'CoreLibs/graphics.lua'
 import 'CoreLibs/object.lua'
-import "disc"
-import "world"
+import "circle.lua"
+import "disc.lua"
+import "world.lua"
 
 local gfx = playdate.graphics
 gfx.setColor(gfx.kColorBlack)
 
 local world_setup = false
 
-kGravityMagnitude=6778
+kGravityMagnitude=36778 
 
 --kGravityMagnitude = 66778 -- 9.8 m/s^2, 173 ppi = 6811 px/m
-gravity = {x=0, y=kGravityMagnitude, z=0}
-circleShapes = {}
 wallSegments = {}
 allConstraints = {}
 local lastPhysTime = 0
 local lastGrafTime = 0
 
 function updateGravity()
-    x, y, z = playdate.readAccelerometer()
-    gravity.x = x * kGravityMagnitude
-    gravity.y = y * kGravityMagnitude
-    gravity.z = y * kGravityMagnitude
-    World.space:setGravity(gravity.x, gravity.y)
+    local x, y, z = playdate.readAccelerometer()
+    World:setGravity(x * kGravityMagnitude, y * kGravityMagnitude, z * kGravityMagnitude)
 end
 
 function addRandomCircle()
@@ -37,10 +33,7 @@ function addRandomCircle()
 
     local newDisc = Disc(x, y, radius, density, friction, elasticity)
     if (newDisc ~= nil) then
-        -- printTable(newDisc)
         newDisc:addSprite()
-    else
-        print("newDisc seems to be nil?")
     end
     return newDisc
 end
@@ -84,7 +77,7 @@ function setup()
         printTable(World.space)
         World.space:addShape(segment)
     end
-    addPegs()
+    --addPegs()
     for i=1,10 do
        addRandomCircle()
     end
@@ -126,7 +119,7 @@ function playdate.update()
     updateGravity()
     World.space:step(dt)
     gfx.sprite.update()
-   lastPhysTime = now
+    lastPhysTime = now
     lastGrafTime = now
  
     
