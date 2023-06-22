@@ -82,11 +82,6 @@ function Disc:updateFloorFriction()
     end
 end
 
-function Disc:update() --FIXME: this should be driven in physics loop, not this render call 
-    Disc.super.update(self)
-    self:updateDrag()
-    self:updateFloorFriction()
-end
 
 function Disc:__gc()
     print("destroying disc")
