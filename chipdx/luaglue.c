@@ -381,6 +381,11 @@ int chipmunk_body_getVelocity(lua_State* L){
     return 2;
 }
 
+int chipmunk_body_getAngularVelocity(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    pd->lua->pushFloat((float) cpBodyGetAngularVelocity(body));
+    return 1;
+}
 
 int chipmunk_body_getForce(lua_State* L){
     cpBody* body = getBodyArg(1);
@@ -434,6 +439,7 @@ static const lua_reg bodyClass[] = {
     {"getAngle", chipmunk_body_getAngle},
     {"setAngle", chipmunk_body_setAngle},
     {"getVelocity", chipmunk_body_getVelocity},
+    {"getAngularVelocity", chipmunk_body_getAngularVelocity},
     {"getForce", chipmunk_body_getForce},
     {"setForce", chipmunk_body_setForce},
     {"getTorque", chipmunk_body_getTorque},
@@ -457,6 +463,16 @@ int chipmunk_constraint_newPivotJoint(lua_State* L){
     cpFloat anchorBY = pd->lua->getArgFloat(6);
     cpConstraint* pivot = cpPivotJointNew2(bodyA, bodyB, cpv(anchorAX, anchorAY), cpv(anchorBX, anchorBY));
     pd->lua->pushObject(pivot, CLASSNAME_CONSTRAINT, 0);
+    return 1;
+}
+
+int chipmunk_constraint_newGearJoint(lua_State* L){
+    cpBody *bodyA = getBodyArg(1);
+    cpBody *bodyB = getBodyArg(2);
+    cpFloat phase = pd->lua->getArgFloat(3);
+    cpFloat ratio = pd->lua->getArgFloat(4);
+    cpConstraint* gear = cpGearJointNew(bodyA, bodyB, phase, ratio);
+    pd->lua->pushObject(gear, CLASSNAME_CONSTRAINT, 0);
     return 1;
 }
 
@@ -496,6 +512,7 @@ int chipmunk_constraint_setMaxForce(lua_State* L){
 static const lua_reg constraintClass[] = {
     {"__gc", chipmunk_constraint_delete},
     {"newPivotJoint", chipmunk_constraint_newPivotJoint},
+    {"newGearJoint", chipmunk_constraint_newGearJoint},
     {"newDampedSpring", chipmunk_constraint_newDampedSpring},
     {"setMaxForce", chipmunk_constraint_setMaxForce},
     {"setMaxBias", chipmunk_constraint_setMaxBias}  

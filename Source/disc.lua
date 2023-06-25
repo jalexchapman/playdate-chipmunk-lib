@@ -24,64 +24,72 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     self.mass = mass
     self.moment = moment
 
-    local dragConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
-    self._dragConstraint = dragConstraint
-    if dragConstraint ~= nil then
-        dragConstraint:setMaxBias(0) -- we don't actually want to pivot
-        dragConstraint:setMaxForce(0) -- update will set this
+    local linearDragConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
+    if linearDragConstraint ~= nil then
+        linearDragConstraint:setMaxBias(0) -- we don't actually want to pivot
+        linearDragConstraint:setMaxForce(0) -- update will set this
     end
-    self._rotDragConstraint = nil
-    self._floorFrictionConstraint = nil
-    local floorFricConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
-    self._floorFrictionConstraint = floorFricConstraint
-    if floorFricConstraint ~= nil then
-        floorFricConstraint:setMaxBias(0) -- don't actually pivot
-        floorFricConstraint:setMaxForce(0) -- update will set this
-    end
-    self._rotFloorFrictionConstraint = nil
+    self._linearDragConstraint = linearDragConstraint
+    
+     local rotDragConstraint = chipmunk.constraint.newGearJoint(self._body, World.staticBody, 0, 1)
+     if rotDragConstraint ~= nil then
+        rotDragConstraint:setMaxBias(0)
+        rotDragConstraint:setMaxForce(0)
+     end
+     self._rotDragConstraint = rotDragConstraint
+    
 end
 
 function Disc:addSprite()
     Disc.super.addSprite(self)
     print("Disc:addSprite()")
-    if self._dragConstraint then World.space:addConstraint(self._dragConstraint) end
+    if self._linearDragConstraint then World.space:addConstraint(self._linearDragConstraint) end
     if self._rotDragConstraint then World.space:addConstraint(self._rotDragConstraint) end
-    if self._floorFrictionConstraint then World.space:addConstraint(self._floorFrictionConstraint) end
-    if self._rotFloorFrictionConstraint then World.space:addConstraint(self._rotFloorFrictionConstraint) end
     World.space:addBody(self._body)
 end
 
 function Disc:removeSprite()
-    if self._dragConstraint then World.space:removeConstraint(self._dragConstraint) end
+    if self._linearDragConstraint then World.space:removeConstraint(self._linearDragConstraint) end
     if self._rotDragConstraint then World.space:removeConstraint(self._rotDragConstraint) end
-    if self._floorFrictionConstraint then World.space:removeConstraint(self._floorFrictionConstraint) end
-    if self._rotFloorFrictionConstraint then World.space:removeConstraint(self._rotFloorFrictionConstraint) end
-    Disc.super.removeSprite(self)
+   Disc.super.removeSprite(self)
     World.space:removeBody(self._body)
     print("Disc:removeSprite()")
 end
 
-function Disc:updateDrag()
-    if (self._dragConstraint ~= nil) then
+-- update linear fluid drag and linear friction against the floor play surface
+function Disc:updateLinearDrag()
+    if (self._linearDragConstraint ~= nil) then
+        local drag = 0
+        local friction = 0
         local vx, vy = self._body:getVelocity()
-        --force = dragCoeff * frontal area * v^2; 
-        self._dragConstraint:setMaxForce(self.dragCoeff * 2 * self.radius * (vx*vx + vy*vy))
-    end
-end
-
-
-function Disc:updateFloorFriction()
-    if (self._floorFrictionConstraint ~= nil) then
+        local w = self._body:getAngularVelocity()
+        --viscous drag = dragCoeff * frontal area * v^2; 
+        drag = self.dragCoeff * 2 * self.radius * (vx*vx + vy*vy)
         local frictionCoeff = self.stiction
-        local vx, vy = self._body:getVelocity()
-        if (vx ~=0 or vy ~= 0) then
+        if (vx ~=0 or vy ~= 0 or w ~= 0) then
             frictionCoeff = self.sliction
         end
-        self._floorFrictionConstraint:setMaxForce(frictionCoeff * World.gravity.z * self.mass)
-        --local floorFric = math.abs(fZ) * frictionCoeff
+        --Coulomb drag = coefficient of friction * normal force
+        friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
+        self._linearDragConstraint:setMaxForce(drag + friction)
     end
 end
 
+function Disc:updateRotationalDrag()
+    if self._rotDragConstraint ~= nil then
+        local frictionCoeff = self.stiction
+        local vx, vy = self._body:getVelocity()
+        local w = self._body:getAngularVelocity()
+        if (vx ~=0 or vy ~= 0 or w ~= 0) then
+            frictionCoeff = self.sliction
+        end
+        local friction = 0
+        -- Torque = 2/3 coefficient of friction * normal force * radius
+        friction = 0.6667 * frictionCoeff * math.abs(World.gravity.z) * self.mass * self.radius
+        self._rotDragConstraint:setMaxForce(friction)
+        --TODO: viscous drag?
+    end
+end
 
 function Disc:__gc()
     print("destroying disc")

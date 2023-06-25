@@ -21,6 +21,13 @@ allConstraints = {}
 local discs = {}
 local lastPhysTime = 0
 local lastGrafTime = 0
+local nextPhysTime = 0
+local nextGrafTime = 0
+local lastGrafDt = 0
+local lastPhysDt = 0
+local minPhysInterval = 10
+local minGrafInterval = 20
+local updateDrag = true
 
 function updateGravity()
     local x, y, z = playdate.readAccelerometer()
@@ -66,9 +73,14 @@ end
 
 function setup()
     playdate.startAccelerometer()
-    playdate.display.setRefreshRate(50)
+    playdate.display.setRefreshRate(0) --update has its own frame limiter
     World:setup()
     
+    local menu = playdate.getSystemMenu()
+    menu:addCheckmarkMenuItem("update drag", true, function(value)
+        updateDrag = value
+    end)
+
     wallSegments = {
         chipmunk.shape.newSegment(World.staticBody,-20,-20,420,-20,20),
         chipmunk.shape.newSegment(World.staticBody,-20,260,420,260,20),
@@ -170,31 +182,73 @@ local function updatePhysConstants()
 end
 
 local function updateFrictionAndDragValues()
-    for _, disc in ipairs(discs) do
-        disc:updateDrag()
-        disc:updateFloorFriction()
+    if updateDrag then
+        for _, disc in ipairs(discs) do
+            disc:updateLinearDrag()
+            disc:updateRotationalDrag()
+        end
     end
-    
 end
 
+function updateInputs()
+    updatePhysConstants()
+    updateGravity()
+end
+
+function updateChipmunk(dtSeconds)
+    updateFrictionAndDragValues()
+    World.space:step(dtSeconds)
+end
+
+function updateGraphics()
+    gfx.sprite.update()
+    drawPhysConstants(0,0)
+end
+
+function drawPerf(x,y)
+    local physFrameRate = 0
+    local grafFrameRate = 0
+    if lastPhysDt > 0 then
+        physFrameRate = 1000/lastPhysDt
+    end
+    if lastGrafDt > 0 then
+        grafFrameRate = 1000/lastGrafDt
+    end
+    gfx.drawText(string.format(
+        "graphics: %.0f physics: %.0f ",
+        grafFrameRate, physFrameRate),x,y)
+end
 
 function playdate.update() 
     if not world_setup then
         setup()
+        lastGrafTime = playdate.getCurrentTimeMilliseconds()
+        lastPhysTime = lastGrafTime
+        nextGrafTime = lastGrafTime + minGrafInterval
+        nextPhysTime = lastPhysTime + minGrafInterval
     end
     local now = playdate.getCurrentTimeMilliseconds()
-    local dt = (now - lastPhysTime)/1000
-    --if dt > 50 then dt = 50 end -- minimum physics update 20Hz, slowdown instead after that
-    --updatePerf(dt)
-    --drawPerf(25,0)
-    --playdate.drawFPS(0,0)
-    updatePhysConstants()
-    updateGravity()
-    updateFrictionAndDragValues()
-    World.space:step(dt)
-    gfx.sprite.update()
-    drawPhysConstants(0,0)
-    lastPhysTime = now
-    lastGrafTime = now
+    updateInputs()
+
+    if now > nextPhysTime then
+        local physDt = now - lastPhysTime
+        lastPhysTime = now
+        updateChipmunk(physDt/1000)
+        lastPhysDt = physDt
+        nextPhysTime = now + minPhysInterval
+    end
+
+    if now > nextGrafTime then
+        local grafDt = now - lastGrafTime
+        lastGrafTime = now
+        updateGraphics()
+        lastGrafDt = grafDt
+        -- if lastPhysDt > 20 then -- cut graphics rate to protect physics stability
+        --     nextGrafTime = now + 2.5 * minGrafInterval
+        -- else
+            nextGrafTime = now + minGrafInterval
+        -- end
+        drawPerf(0,12)
+    end
 end
 
