@@ -21,6 +21,9 @@ function Circle:init(body, xOffset, yOffset, radius, friction, elasticity)
     local x, y = self._body:getPosition()
     x += xOffset
     y += yOffset
+    self.prevX = x
+    self.prevY = y
+    self.prevAngle = self.angle
 
     self._shape = chipmunk.shape.newCircle(self._body, radius, xOffset, yOffset)
     self._shape:setFriction(friction)
@@ -60,6 +63,10 @@ function Circle:update()
         x += xOff
         y += yOff            
     end
+
+    self.prevX = self.x
+    self.prevY = self.y
+    self.prevAngle = self.angle
 
     --round to nearest int to avoid redrawing subpixel moves
     a = math.floor(a * 100 + 0.5)/100 --pesky radians

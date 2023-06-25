@@ -112,20 +112,20 @@ end
 
 local perfStats = {samples=0, dtMax=0, dtMin = math.huge, dtAvg = 0}
 
-local function updatePerf(dt)
-    local agg = perfStats.samples * perfStats.dtAvg
-    perfStats.samples = perfStats.samples + 1
-    agg = agg + dt
-    perfStats.dtAvg = agg/perfStats.samples
-    if 0 < dt and dt < perfStats.dtMin then perfStats.dtMin = dt end
-    if dt > perfStats.dtMax then perfStats.dtMax = dt end
-end
+-- local function updatePerf(dt)
+--     local agg = perfStats.samples * perfStats.dtAvg
+--     perfStats.samples = perfStats.samples + 1
+--     agg = agg + dt
+--     perfStats.dtAvg = agg/perfStats.samples
+--     if 0 < dt and dt < perfStats.dtMin then perfStats.dtMin = dt end
+--     if dt > perfStats.dtMax then perfStats.dtMax = dt end
+-- end
 
-local function drawPerf(x, y)
-    gfx.drawText(string.format( -- draw perf
-    "min dt: %e\nmax dt: %e\nmean dt: %e",
-    perfStats.dtMin, perfStats.dtMax, perfStats.dtAvg),x,y)
-end
+-- local function drawPerf(x, y) -- there is another drawPerf - don't just uncomment
+--     gfx.drawText(string.format( -- draw perf
+--     "min dt: %e\nmax dt: %e\nmean dt: %e",
+--     perfStats.dtMin, perfStats.dtMax, perfStats.dtAvg),x,y)
+-- end
 
 local function drawPhysConstants(x, y)
     gfx.drawText(string.format(
@@ -219,8 +219,12 @@ function drawPerf(x,y)
         grafFrameRate = 1000/lastGrafDt
     end
     gfx.drawText(string.format(
-        "graphics: %.0f physics: %.0f ",
-        grafFrameRate, physFrameRate),x,y)
+        "graphics: %.0f",
+        grafFrameRate),x,y)
+    gfx.drawText(string.format(
+        "physics: %.0f ",
+        physFrameRate),x + 120 ,y)
+
 end
 
 function playdate.update() 
