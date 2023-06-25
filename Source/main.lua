@@ -28,6 +28,7 @@ local lastPhysDt = 0
 local minPhysInterval = 10
 local minGrafInterval = 20
 local updateDrag = true
+local asynchronousUpdates = true
 
 function updateGravity()
     local x, y, z = playdate.readAccelerometer()
@@ -79,6 +80,9 @@ function setup()
     local menu = playdate.getSystemMenu()
     menu:addCheckmarkMenuItem("update drag", true, function(value)
         updateDrag = value
+    end)
+    menu:addCheckmarkMenuItem("async", true, function(value)
+        asynchronousUpdates = value
     end)
 
     wallSegments = {
@@ -230,7 +234,7 @@ function playdate.update()
     local now = playdate.getCurrentTimeMilliseconds()
     updateInputs()
 
-    if now > nextPhysTime then
+    if not asynchronousUpdates or now > nextPhysTime then
         local physDt = now - lastPhysTime
         lastPhysTime = now
         updateChipmunk(physDt/1000)
@@ -238,7 +242,7 @@ function playdate.update()
         nextPhysTime = now + minPhysInterval
     end
 
-    if now > nextGrafTime then
+    if not asynchronousUpdates or now > nextGrafTime then
         local grafDt = now - lastGrafTime
         lastGrafTime = now
         updateGraphics()
