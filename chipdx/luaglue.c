@@ -13,13 +13,13 @@ static PlaydateAPI* pd = NULL;
 #define CLASSNAME_SPACE "chipmunk.space"
 #define CLASSNAME_BODY "chipmunk.body"
 #define CLASSNAME_SHAPE "chipmunk.shape"
-// #define CLASSNAME_CONSTRAINT "chipmunk.constraint"
+#define CLASSNAME_CONSTRAINT "chipmunk.constraint"
 
 // UTILITY
 static cpSpace* getSpaceArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_SPACE, NULL); }
 static cpBody* getBodyArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_BODY, NULL); }
 static cpShape* getShapeArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_SHAPE, NULL); }
-// static cpConstraint* getConstraintArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_CONSTRAINT, NULL); }
+static cpConstraint* getConstraintArg(int n) { return pd->lua->getArgObject(n, CLASSNAME_CONSTRAINT, NULL); }
 
 //chipmunk (helpers)
 int chipmunk_momentForCircle(lua_State* L)
@@ -150,6 +150,13 @@ int chipmunk_space_addBody(lua_State* L){
     return 0;
 }
 
+int chipmunk_space_addConstraint(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    cpConstraint* constraint = getConstraintArg(2);
+    cpSpaceAddConstraint(space, constraint); //TODO: expose retval?
+    return 0;
+}
+
 int chipmunk_space_removeShape(lua_State* L){
     cpSpace* space = getSpaceArg(1);
     cpShape* shape = getShapeArg(2);
@@ -161,6 +168,13 @@ int chipmunk_space_removeBody(lua_State* L){
     cpSpace* space = getSpaceArg(1);
     cpBody* body = getBodyArg(2);
     cpSpaceRemoveBody(space, body);
+    return 0;
+}
+
+int chipmunk_space_removeConstraint(lua_State* L){
+    cpSpace* space = getSpaceArg(1);
+    cpConstraint* constraint = getConstraintArg(2);
+    cpSpaceRemoveConstraint(space, constraint);
     return 0;
 }
 
@@ -191,12 +205,10 @@ static const lua_reg spaceClass[] = {
     {"step", chipmunk_space_step},
     {"addShape", chipmunk_space_addShape},
     {"addBody", chipmunk_space_addBody},
-    // {"addConstraint", chipmunk_space_addConstraint},
+    {"addConstraint", chipmunk_space_addConstraint},
     {"removeShape", chipmunk_space_removeShape},
-    
-    
     {"removeBody", chipmunk_space_removeBody},
-    // {"removeConstraint", chipmunk_space_removeConstraint},
+    {"removeConstraint", chipmunk_space_removeConstraint},
     {NULL, NULL}
 };
 
@@ -280,7 +292,6 @@ int chipmunk_shape_getBody(lua_State* L){
 
 static const lua_reg shapeClass[] = {
     {"__gc", chipmunk_shape_delete},
-    //cpBody* cpShapeGetBody(*shape)
     //void cpShapeSetBody(*shape, *body)
     //cpFloat cpShapeGetMass(*shape)
     //void cpShapeSetMass(*shape, cpFloat mass)
@@ -292,12 +303,8 @@ static const lua_reg shapeClass[] = {
     {"getCircleRadius", chipmunk_shape_getCircleRadius},
     {"getCircleOffset", chipmunk_shape_getCircleOffset},
     {"getBody", chipmunk_shape_getBody},
-    //cpFloat cpShapeGetFriction(*shape)
-    //void cpShapeSetFriction(*shape, cpFloat)
     {"newCircle", chipmunk_shape_newCircle},
     {"newSegment", chipmunk_shape_newSegment}
-    //cpCircleShapeGetOffset
-    //cpCircleShapeGetRadius
     
 };
 
@@ -366,6 +373,20 @@ int chipmunk_body_setAngle(lua_State* L){
     return 0;
 }
 
+int chipmunk_body_getVelocity(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    cpVect v = cpBodyGetVelocity(body);
+    pd->lua->pushFloat((float) v.x);
+    pd->lua->pushFloat((float) v.y);
+    return 2;
+}
+
+int chipmunk_body_getAngularVelocity(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    pd->lua->pushFloat((float) cpBodyGetAngularVelocity(body));
+    return 1;
+}
+
 int chipmunk_body_getForce(lua_State* L){
     cpBody* body = getBodyArg(1);
     cpVect f = cpBodyGetForce(body);
@@ -417,12 +438,84 @@ static const lua_reg bodyClass[] = {
     {"setPosition", chipmunk_body_setPosition},
     {"getAngle", chipmunk_body_getAngle},
     {"setAngle", chipmunk_body_setAngle},
+    {"getVelocity", chipmunk_body_getVelocity},
+    {"getAngularVelocity", chipmunk_body_getAngularVelocity},
     {"getForce", chipmunk_body_getForce},
     {"setForce", chipmunk_body_setForce},
     {"getTorque", chipmunk_body_getTorque},
     {"setTorque", chipmunk_body_setTorque},
     {"getMass", chipmunk_body_getMass},
     {"getMoment", chipmunk_body_getMoment}
+};
+
+//CONSTRAINT
+int chipmunk_constraint_delete(lua_State* L){
+    cpConstraintFree(getConstraintArg(1));
+    return 0;
+}
+
+int chipmunk_constraint_newPivotJoint(lua_State* L){
+    cpBody *bodyA = getBodyArg(1);
+    cpBody *bodyB = getBodyArg(2);
+    cpFloat anchorAX = pd->lua->getArgFloat(3);
+    cpFloat anchorAY = pd->lua->getArgFloat(4);
+    cpFloat anchorBX = pd->lua->getArgFloat(5);
+    cpFloat anchorBY = pd->lua->getArgFloat(6);
+    cpConstraint* pivot = cpPivotJointNew2(bodyA, bodyB, cpv(anchorAX, anchorAY), cpv(anchorBX, anchorBY));
+    pd->lua->pushObject(pivot, CLASSNAME_CONSTRAINT, 0);
+    return 1;
+}
+
+int chipmunk_constraint_newGearJoint(lua_State* L){
+    cpBody *bodyA = getBodyArg(1);
+    cpBody *bodyB = getBodyArg(2);
+    cpFloat phase = pd->lua->getArgFloat(3);
+    cpFloat ratio = pd->lua->getArgFloat(4);
+    cpConstraint* gear = cpGearJointNew(bodyA, bodyB, phase, ratio);
+    pd->lua->pushObject(gear, CLASSNAME_CONSTRAINT, 0);
+    return 1;
+}
+
+int chipmunk_constraint_newDampedSpring(lua_State* L){
+    cpBody *bodyA = getBodyArg(1);
+    cpBody *bodyB = getBodyArg(2);
+    cpFloat anchorAX = pd->lua->getArgFloat(3);
+    cpFloat anchorAY = pd->lua->getArgFloat(4);
+    cpFloat anchorBX = pd->lua->getArgFloat(5);
+    cpFloat anchorBY = pd->lua->getArgFloat(6);
+    cpFloat restLength = pd->lua->getArgFloat(7);
+    cpFloat stiffness = pd->lua->getArgFloat(8);
+    cpFloat damping = pd->lua->getArgFloat(9);
+    cpConstraint* spring = cpDampedSpringNew(
+        bodyA, bodyB, cpv(anchorAX, anchorAY), cpv(anchorBX, anchorBY),
+        restLength, stiffness, damping
+    );
+    pd->lua->pushObject(spring, CLASSNAME_CONSTRAINT, 0);
+    return 1;
+}
+
+int chipmunk_constraint_setMaxBias(lua_State* L){
+    cpConstraint *constraint = getConstraintArg(1);
+    cpFloat maxBias = pd->lua->getArgFloat(2);
+    cpConstraintSetMaxBias(constraint, maxBias);
+    return 0;
+}
+
+int chipmunk_constraint_setMaxForce(lua_State* L){
+    cpConstraint *constraint = getConstraintArg(1);
+    cpFloat maxForce = pd->lua->getArgFloat(2);
+    cpConstraintSetMaxForce(constraint, maxForce);
+    return 0;
+}
+
+
+static const lua_reg constraintClass[] = {
+    {"__gc", chipmunk_constraint_delete},
+    {"newPivotJoint", chipmunk_constraint_newPivotJoint},
+    {"newGearJoint", chipmunk_constraint_newGearJoint},
+    {"newDampedSpring", chipmunk_constraint_newDampedSpring},
+    {"setMaxForce", chipmunk_constraint_setMaxForce},
+    {"setMaxBias", chipmunk_constraint_setMaxBias}  
 };
 
 void registerChipmunk(PlaydateAPI* playdate)
@@ -450,8 +543,8 @@ void registerChipmunk(PlaydateAPI* playdate)
         return;
     }
 
-//    if (!pd->lua->registerClass(CLASSNAME_CONSTRAINT, constraintClass, NULL, 0, &err)) {
-//        pb_log("chipmunk: failed to register constraint class. %s", err);
-//        return;
-//    }
+    if (!pd->lua->registerClass(CLASSNAME_CONSTRAINT, constraintClass, NULL, 0, &err)) {
+       pd->system->logToConsole("chipmunk: failed to register constraint class. %s", err);
+       return;
+   }
 }
