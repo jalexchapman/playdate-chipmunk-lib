@@ -4,6 +4,7 @@ import 'CoreLibs/object.lua'
 import "circle.lua"
 import "disc.lua"
 import "world.lua"
+import "box.lua"
 
 local gfx = playdate.graphics
 gfx.setColor(gfx.kColorBlack)
@@ -18,7 +19,7 @@ local dragCoeff = 0.0015
 --kGravityMagnitude = 66778 -- 9.8 m/s^2, 173 ppi = 6811 px/m
 wallSegments = {}
 allConstraints = {}
-local discs = {}
+local objects = {}
 local lastPhysTime = 0
 local lastGrafTime = 0
 local nextPhysTime = 0
@@ -27,8 +28,9 @@ local lastGrafDt = 0
 local lastPhysDt = 0
 local minPhysInterval = 10
 local minGrafInterval = 20
-local updateDrag = true
+local luaPhys = true
 local asynchronousUpdates = true
+local drawEnabled = true
 
 function updateGravity()
     local x, y, z = playdate.readAccelerometer()
@@ -39,16 +41,36 @@ function addRandomCircle()
     local radius = math.random(5, 30)
     local density = 0.003
     local friction = 0.3
-    local elasticity = 0.5
+    local elasticity = 0.8
     local x = math.random(radius + 1, 399 - radius)
     local y = math.random(radius + 1, 239 - radius)
 
     local newDisc = Disc(x, y, radius, density, friction, elasticity)
     if (newDisc ~= nil) then
         newDisc:addSprite()
-        table.insert(discs, newDisc)
+        table.insert(objects, newDisc)
     end
     return newDisc
+end
+
+function addRandomBox()
+    local halfwidth = math.random(3, 20)
+    local halfheight = math.random(3,20)
+    local density = 0.003
+    local friction = 0.3
+    local elasticity = 0.8
+    local x = math.random(halfwidth + 1, 399 - halfwidth)
+    local y = math.random(halfheight + 1, 239 - halfheight)
+
+    local newBox = Box(x, y, halfwidth * 2, halfheight * 2, 2,
+        density, friction, elasticity
+    )
+    if newBox ~= nil then
+        newBox:addSprite()
+        table.insert(objects, newBox)
+    end
+    return newBox
+
 end
 
 function addPeg(r, x, y)
@@ -78,12 +100,15 @@ function setup()
     World:setup()
     
     local menu = playdate.getSystemMenu()
-    menu:addCheckmarkMenuItem("update drag", true, function(value)
-        updateDrag = value
+    menu:addCheckmarkMenuItem("lua phys", true, function(value)
+        luaPhys = value
     end)
     menu:addCheckmarkMenuItem("async", true, function(value)
         asynchronousUpdates = value
     end)
+    menu:addCheckmarkMenuItem("draw", true, function(value)
+        drawEnabled = value
+    end)    
 
     wallSegments = {
         chipmunk.shape.newSegment(World.staticBody,-20,-20,420,-20,20),
@@ -99,8 +124,9 @@ function setup()
         World.space:addShape(segment)
     end
     --addPegs()
-    for i=1,10 do
+    for i=1,3 do
        addRandomCircle()
+       addRandomBox()
     end
     gfx.setBackgroundColor(gfx.kColorWhite)
     gfx.setColor(gfx.kColorWhite)
@@ -170,10 +196,10 @@ local function updatePhysConstants()
     end
 
     if dragChanged or frictionChanged then
-        for _, disc in ipairs(discs) do
-            disc.stiction = stiction
-            disc.sliction = sliction
-            disc.dragCoeff = dragCoeff
+        for _, object in ipairs(objects) do
+            object.stiction = stiction
+            object.sliction = sliction
+            object.dragCoeff = dragCoeff
         end
     end
 
@@ -186,17 +212,19 @@ local function updatePhysConstants()
 end
 
 local function updateFrictionAndDragValues()
-    if updateDrag then
-        for _, disc in ipairs(discs) do
-            disc:updateLinearDrag()
-            disc:updateRotationalDrag()
+    if luaPhys then
+        for _, item in ipairs(objects) do
+            item:updateLinearDrag()
+            item:updateRotationalDrag()
         end
     end
 end
 
 function updateInputs()
     updatePhysConstants()
-    updateGravity()
+    if luaPhys then
+        updateGravity()
+    end
 end
 
 function updateChipmunk(dtSeconds)
@@ -205,7 +233,12 @@ function updateChipmunk(dtSeconds)
 end
 
 function updateGraphics()
-    gfx.sprite.update()
+    if drawEnabled then
+        gfx.sprite.update()
+    else --clear the debug box
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRect(0,0,400,33)
+    end
     drawPhysConstants(0,0)
 end
 
@@ -256,7 +289,7 @@ function playdate.update()
         -- else
             nextGrafTime = now + minGrafInterval
         -- end
-        drawPerf(0,12)
+        drawPerf(0,15)
     end
 end
 

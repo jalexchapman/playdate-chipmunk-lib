@@ -33,8 +33,18 @@ int chipmunk_momentForCircle(lua_State* L)
     return 1;
 }
 
+int chipmunk_momentForBox(lua_State* L)
+{
+    cpFloat m = pd->lua->getArgFloat(1);
+    cpFloat width = pd->lua->getArgFloat(2);
+    cpFloat height = pd->lua->getArgFloat(3);
+    pd->lua->pushFloat((float) cpMomentForBox(m, width, height));
+    return 1;
+}
+
 static const lua_reg chipmunkClass[] = {
-    {"momentForCircle", chipmunk_momentForCircle }
+    {"momentForCircle", chipmunk_momentForCircle},
+    {"momentForBox", chipmunk_momentForBox}
 };
 
 //cpSpace
@@ -257,6 +267,16 @@ int chipmunk_shape_newCircle(lua_State* L){
     return 1;
 }
 
+int chipmunk_shape_newBox(lua_State* L){
+    cpBody *body = getBodyArg(1);
+    cpFloat width = pd->lua->getArgFloat(2);
+    cpFloat height = pd->lua->getArgFloat(3);
+    cpFloat radius = pd->lua->getArgFloat(4);
+    cpShape* shape = cpBoxShapeNew(body, width, height, radius);
+    pd->lua->pushObject(shape, CLASSNAME_SHAPE, 0);
+    return 1;
+}
+
 int chipmunk_shape_newSegment(lua_State* L){
     cpBody *body = getBodyArg(1);
     cpFloat xA = pd->lua->getArgFloat(2);
@@ -304,6 +324,7 @@ static const lua_reg shapeClass[] = {
     {"getCircleOffset", chipmunk_shape_getCircleOffset},
     {"getBody", chipmunk_shape_getBody},
     {"newCircle", chipmunk_shape_newCircle},
+    {"newBox", chipmunk_shape_newBox},
     {"newSegment", chipmunk_shape_newSegment}
     
 };
