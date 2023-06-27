@@ -9,6 +9,11 @@ import "box.lua"
 local gfx = playdate.graphics
 gfx.setColor(gfx.kColorBlack)
 
+FixedStepMs = 10 --100fps/10ms physics
+StepAccumulator = 0
+MaxStepsPerFrame = 10 --allow slowdown if it frame time is over 100ms
+LastUpdate = 0
+
 local world_setup = false
 
 local gravityMagnitude=36778 -- limiting to minimize tunneling/glitching
@@ -20,16 +25,7 @@ local dragCoeff = 0.0015
 wallSegments = {}
 allConstraints = {}
 local objects = {}
-local lastPhysTime = 0
-local lastGrafTime = 0
-local nextPhysTime = 0
-local nextGrafTime = 0
-local lastGrafDt = 0
-local lastPhysDt = 0
-local minPhysInterval = 10
-local minGrafInterval = 20
 local luaPhys = true
-local asynchronousUpdates = true
 local drawEnabled = true
 
 function updateGravity()
@@ -103,9 +99,6 @@ function setup()
     menu:addCheckmarkMenuItem("lua phys", true, function(value)
         luaPhys = value
     end)
-    menu:addCheckmarkMenuItem("async", true, function(value)
-        asynchronousUpdates = value
-    end)
     menu:addCheckmarkMenuItem("draw", true, function(value)
         drawEnabled = value
     end)    
@@ -131,27 +124,9 @@ function setup()
     gfx.setBackgroundColor(gfx.kColorWhite)
     gfx.setColor(gfx.kColorWhite)
     gfx.fillRect(0,0,400,240)
-    lastPhysTime = playdate.getCurrentTimeMilliseconds()
-    lastGrafTime = lastPhysTime
+
     world_setup = true
 end
-
-local perfStats = {samples=0, dtMax=0, dtMin = math.huge, dtAvg = 0}
-
--- local function updatePerf(dt)
---     local agg = perfStats.samples * perfStats.dtAvg
---     perfStats.samples = perfStats.samples + 1
---     agg = agg + dt
---     perfStats.dtAvg = agg/perfStats.samples
---     if 0 < dt and dt < perfStats.dtMin then perfStats.dtMin = dt end
---     if dt > perfStats.dtMax then perfStats.dtMax = dt end
--- end
-
--- local function drawPerf(x, y) -- there is another drawPerf - don't just uncomment
---     gfx.drawText(string.format( -- draw perf
---     "min dt: %e\nmax dt: %e\nmean dt: %e",
---     perfStats.dtMin, perfStats.dtMax, perfStats.dtAvg),x,y)
--- end
 
 local function drawPhysConstants(x, y)
     gfx.drawText(string.format(
@@ -242,54 +217,32 @@ function updateGraphics()
     drawPhysConstants(0,0)
 end
 
-function drawPerf(x,y)
-    local physFrameRate = 0
-    local grafFrameRate = 0
-    if lastPhysDt > 0 then
-        physFrameRate = 1000/lastPhysDt
-    end
-    if lastGrafDt > 0 then
-        grafFrameRate = 1000/lastGrafDt
-    end
-    gfx.drawText(string.format(
-        "graphics: %.0f",
-        grafFrameRate),x,y)
-    gfx.drawText(string.format(
-        "physics: %.0f ",
-        physFrameRate),x + 120 ,y)
-
-end
-
 function playdate.update() 
     if not world_setup then
         setup()
-        lastGrafTime = playdate.getCurrentTimeMilliseconds()
-        lastPhysTime = lastGrafTime
-        nextGrafTime = lastGrafTime + minGrafInterval
-        nextPhysTime = lastPhysTime + minGrafInterval
+        LastUpdate = playdate.getCurrentTimeMilliseconds()
     end
+    fixedRefresh()
+end
+
+function fixedRefresh() --derived from https://gafferongames.com/post/fix_your_timestep/
     local now = playdate.getCurrentTimeMilliseconds()
     updateInputs()
 
-    if not asynchronousUpdates or now > nextPhysTime then
-        local physDt = now - lastPhysTime
-        lastPhysTime = now
-        updateChipmunk(physDt/1000)
-        lastPhysDt = physDt
-        nextPhysTime = now + minPhysInterval
+    local frameTime = now - LastUpdate
+    StepAccumulator += frameTime
+    LastUpdate = now
+    
+    local fixedStepSec = FixedStepMs / 1000
+    local steps = 0
+
+    while StepAccumulator >= FixedStepMs and steps < MaxStepsPerFrame do
+        steps = steps + 1
+        StepAccumulator -= FixedStepMs
+        updateChipmunk(fixedStepSec)
     end
 
-    if not asynchronousUpdates or now > nextGrafTime then
-        local grafDt = now - lastGrafTime
-        lastGrafTime = now
-        updateGraphics()
-        lastGrafDt = grafDt
-        -- if lastPhysDt > 20 then -- cut graphics rate to protect physics stability
-        --     nextGrafTime = now + 2.5 * minGrafInterval
-        -- else
-            nextGrafTime = now + minGrafInterval
-        -- end
-        drawPerf(0,15)
-    end
+    updateGraphics()
+
+    playdate:drawFPS(0,15)
 end
-
