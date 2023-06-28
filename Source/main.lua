@@ -11,7 +11,7 @@ gfx.setColor(gfx.kColorBlack)
 
 FixedStepMs = 10 --100fps/10ms physics
 StepAccumulator = 0
-MaxStepsPerFrame = 5 --allow slowdown if it frame time is over 50ms
+MaxStepsPerFrame = 7 --allow slowdown if it frame time is over 70ms - 15fps may be tolerable
 LastUpdate = 0
 
 local world_setup = false
@@ -30,8 +30,10 @@ local rotDragUpdates = true
 local gravityUpdates = true
 
 function updateGravity()
-    local x, y, z = playdate.readAccelerometer()
-    World:setGravity(x * gravityMagnitude, y * gravityMagnitude, z * gravityMagnitude)
+    if gravityUpdates then
+        local x, y, z = playdate.readAccelerometer()
+        World:setGravity(x * gravityMagnitude, y * gravityMagnitude, z * gravityMagnitude)
+    end
 end
 
 function addRandomCircle()
@@ -121,7 +123,7 @@ function setup()
         World.space:addShape(segment)
     end
     --addPegs()
-    for i=1,8 do
+    for i=1,4 do
        addRandomCircle()
        addRandomBox()
     end
@@ -201,9 +203,8 @@ end
 
 function updateInputs()
     updatePhysConstants()
-    if gravityUpdates then
-        updateGravity()
-    end
+    updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
+
 end
 
 function updateChipmunk(dtSeconds)
