@@ -11,7 +11,7 @@ gfx.setColor(gfx.kColorBlack)
 
 FixedStepMs = 10 --100fps/10ms physics
 StepAccumulator = 0
-MaxStepsPerFrame = 10 --allow slowdown if it frame time is over 100ms
+MaxStepsPerFrame = 5 --allow slowdown if it frame time is over 50ms
 LastUpdate = 0
 
 local world_setup = false
@@ -25,8 +25,9 @@ local dragCoeff = 0.0015
 wallSegments = {}
 allConstraints = {}
 local objects = {}
-local luaPhys = true
-local drawEnabled = true
+local dragUpdates = true
+local rotDragUpdates = true
+local gravityUpdates = true
 
 function updateGravity()
     local x, y, z = playdate.readAccelerometer()
@@ -96,11 +97,14 @@ function setup()
     World:setup()
     
     local menu = playdate.getSystemMenu()
-    menu:addCheckmarkMenuItem("lua phys", true, function(value)
-        luaPhys = value
+    menu:addCheckmarkMenuItem("lin drag upd", true, function(value)
+        dragUpdates = value
     end)
-    menu:addCheckmarkMenuItem("draw", true, function(value)
-        drawEnabled = value
+    menu:addCheckmarkMenuItem("rot drag upd", true, function(value)
+        rotDragUpdates = value
+    end)
+    menu:addCheckmarkMenuItem("gravity upd", true, function(value)
+        gravityUpdates = value
     end)    
 
     wallSegments = {
@@ -117,7 +121,7 @@ function setup()
         World.space:addShape(segment)
     end
     --addPegs()
-    for i=1,3 do
+    for i=1,8 do
        addRandomCircle()
        addRandomBox()
     end
@@ -187,17 +191,17 @@ local function updatePhysConstants()
 end
 
 local function updateFrictionAndDragValues()
-    if luaPhys then
+    if dragUpdates or rotDragUpdates then
         for _, item in ipairs(objects) do
-            item:updateLinearDrag()
-            item:updateRotationalDrag()
+            if dragUpdates then item:updateLinearDrag() end
+            if rotDragUpdates then item:updateRotationalDrag() end
         end
     end
 end
 
 function updateInputs()
     updatePhysConstants()
-    if luaPhys then
+    if gravityUpdates then
         updateGravity()
     end
 end
@@ -208,12 +212,7 @@ function updateChipmunk(dtSeconds)
 end
 
 function updateGraphics()
-    if drawEnabled then
-        gfx.sprite.update()
-    else --clear the debug box
-        gfx.setColor(gfx.kColorWhite)
-        gfx.fillRect(0,0,400,33)
-    end
+    gfx.sprite.update()
     drawPhysConstants(0,0)
 end
 
@@ -244,5 +243,5 @@ function fixedRefresh() --derived from https://gafferongames.com/post/fix_your_t
 
     updateGraphics()
 
-    playdate:drawFPS(0,15)
+    playdate:drawFPS(15)
 end
