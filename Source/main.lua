@@ -172,9 +172,15 @@ local function updatePhysConstants()
 
     if not playdate.isCrankDocked()
     then
-        World.gravityMagnitude += playdate.getCrankChange() * 10
-        if World.gravityMagnitude > World.maxGravity then World.gravityMagnitude = World.maxGravity end
-        if World.gravityMagnitude < World.minGravity then World.gravityMagnitude = 0 end
+        local crankAmt = playdate.getCrankChange()
+        if crankAmt ~= 0 then
+            World.gravityMagnitude += playdate.getCrankChange() * 10
+            if World.gravityMagnitude > World.maxGravity then World.gravityMagnitude = World.maxGravity end
+            if World.gravityMagnitude < World.minGravity then World.gravityMagnitude = 0 end
+            if not Settings.accelEnabled then
+                World:setGravity(0,1,0) -- refresh gravity vector
+            end
+        end
     end
 end
 
