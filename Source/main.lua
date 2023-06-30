@@ -5,6 +5,7 @@ import "circle.lua"
 import "disc.lua"
 import "world.lua"
 import "box.lua"
+import "settings.lua"
 
 local gfx = playdate.graphics
 gfx.setColor(gfx.kColorBlack)
@@ -13,27 +14,21 @@ FixedStepMs = 10 --100fps/10ms physics
 StepAccumulator = 0
 MaxStepsPerFrame = 7 --allow slowdown if it frame time is over 70ms - 15fps may be tolerable
 LastUpdate = 0
+DynamicObjects = {}
 
 local world_setup = false
 
-local gravityMagnitude=36778 -- limiting to minimize tunneling/glitching
 local stiction = 0.3
 local sliction = 0.25
 local dragCoeff = 0.0015
 
---kGravityMagnitude = 66778 -- 9.8 m/s^2, 173 ppi = 6811 px/m
 wallSegments = {}
 allConstraints = {}
-local objects = {}
-local dragUpdates = true
-local rotDragUpdates = true
-local gravityUpdates = true
+DynamicObjects = {}
 
 function updateGravity()
-    if gravityUpdates then
-        local x, y, z = playdate.readAccelerometer()
-        World:setGravity(x * gravityMagnitude, y * gravityMagnitude, z * gravityMagnitude)
-    end
+    local x, y, z = playdate.readAccelerometer()
+    World:setGravity(x, y, z)
 end
 
 function addRandomCircle()
@@ -47,7 +42,7 @@ function addRandomCircle()
     local newDisc = Disc(x, y, radius, density, friction, elasticity)
     if (newDisc ~= nil) then
         newDisc:addSprite()
-        table.insert(objects, newDisc)
+        table.insert(DynamicObjects, newDisc)
     end
     return newDisc
 end
@@ -66,7 +61,7 @@ function addRandomBox()
     )
     if newBox ~= nil then
         newBox:addSprite()
-        table.insert(objects, newBox)
+        table.insert(DynamicObjects, newBox)
     end
     return newBox
 
@@ -98,16 +93,7 @@ function setup()
     playdate.display.setRefreshRate(0) --update has its own frame limiter
     World:setup()
     
-    local menu = playdate.getSystemMenu()
-    menu:addCheckmarkMenuItem("lin drag upd", true, function(value)
-        dragUpdates = value
-    end)
-    menu:addCheckmarkMenuItem("rot drag upd", true, function(value)
-        rotDragUpdates = value
-    end)
-    menu:addCheckmarkMenuItem("gravity upd", true, function(value)
-        gravityUpdates = value
-    end)    
+    Settings.menuSetup()
 
     wallSegments = {
         chipmunk.shape.newSegment(World.staticBody,-20,-20,420,-20,20),
@@ -137,7 +123,7 @@ end
 local function drawPhysConstants(x, y)
     gfx.drawText(string.format(
         "stic: %.3f slic: %.3f drag: %.5f grav: %.0f",
-        stiction, sliction, dragCoeff, gravityMagnitude),x,y)
+        stiction, sliction, dragCoeff, World.gravityMagnitude),x,y)
 end
 
 local function updatePhysConstants()
@@ -177,7 +163,7 @@ local function updatePhysConstants()
     end
 
     if dragChanged or frictionChanged then
-        for _, object in ipairs(objects) do
+        for _, object in ipairs(DynamicObjects) do
             object.stiction = stiction
             object.sliction = sliction
             object.dragCoeff = dragCoeff
@@ -186,25 +172,28 @@ local function updatePhysConstants()
 
     if not playdate.isCrankDocked()
     then
-        gravityMagnitude += playdate.getCrankChange() * 10
-        if gravityMagnitude > 66778 then gravityMagnitude = 66778 end
-        if gravityMagnitude < 0.0 then gravityMagnitude = 0 end
+        World.gravityMagnitude += playdate.getCrankChange() * 10
+        if World.gravityMagnitude > World.maxGravity then World.gravityMagnitude = World.maxGravity end
+        if World.gravityMagnitude < World.minGravity then World.gravityMagnitude = 0 end
     end
 end
 
 local function updateFrictionAndDragValues()
-    if dragUpdates or rotDragUpdates then
-        for _, item in ipairs(objects) do
-            if dragUpdates then item:updateLinearDrag() end
-            if rotDragUpdates then item:updateRotationalDrag() end
+    if Settings.dragEnabled then
+        for _, item in ipairs(DynamicObjects) do
+            --printTable(item)
+            item:updateDrag()
         end
     end
 end
 
 function updateInputs()
-    updatePhysConstants()
-    updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
-
+    if Settings.inputMode == InputModes.setConstants then
+        updatePhysConstants()
+    end
+    if Settings.accelEnabled then
+        updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
+    end
 end
 
 function updateChipmunk(dtSeconds)
@@ -214,7 +203,9 @@ end
 
 function updateGraphics()
     gfx.sprite.update()
-    drawPhysConstants(0,0)
+    if Settings.inputMode == InputModes.setConstants then
+        drawPhysConstants(0,0)
+    end
 end
 
 function playdate.update() 

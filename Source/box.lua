@@ -63,22 +63,9 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     self:setCenter(0.5, 0.5)
     self:moveTo(x, y)
 
-
-    --friction
-    local linearDragConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
-    if linearDragConstraint ~= nil then
-        linearDragConstraint:setMaxBias(0) -- we don't actually want to pivot
-        linearDragConstraint:setMaxForce(0) -- update will set this
+    if Settings.dragEnabled then
+        self:addDragConstraints()
     end
-    self._linearDragConstraint = linearDragConstraint
-    
-     local rotDragConstraint = chipmunk.constraint.newGearJoint(self._body, World.staticBody, 0, 1)
-     if rotDragConstraint ~= nil then
-        rotDragConstraint:setMaxBias(0)
-        rotDragConstraint:setMaxForce(0)
-     end
-     self._rotDragConstraint = rotDragConstraint
-
     print("New box " .. width .. "x" .. height .. " at (" .. x .."," .. y ..")")
 end
 
@@ -86,14 +73,51 @@ function Box:addSprite()
     Box.super.addSprite(self)
     World.space:addShape(self._shape)
     World.space:addBody(self._body)
-    if self._linearDragConstraint then World.space:addConstraint(self._linearDragConstraint) end
-    if self._rotDragConstraint then World.space:addConstraint(self._rotDragConstraint) end
-   print("Box:addSprite()")
+    self:enableDragConstraints()
+    print("Box:addSprite()")
 end
 
 function Box:removeSprite()
+    self:disableDragConstraints()
     World.space:removeShape(self._shape)
+    World.space:removeBody(self._body)
     Box.super.removeSprite(self)
+    print("Box:removeSprite()")
+end
+
+function Box:addDragConstraints()
+    if not self._linearDragConstraint then
+        local linearDragConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
+        if linearDragConstraint ~= nil then
+            linearDragConstraint:setMaxBias(0) -- we don't actually want to pivot
+            linearDragConstraint:setMaxForce(0) -- update will set this
+        end
+        self._linearDragConstraint = linearDragConstraint
+    end
+    if not self._rotDragConstraint then
+        local rotDragConstraint = chipmunk.constraint.newGearJoint(self._body, World.staticBody, 0, 1)
+        if rotDragConstraint ~= nil then
+            rotDragConstraint:setMaxBias(0)
+            rotDragConstraint:setMaxForce(0)
+        end
+        self._rotDragConstraint = rotDragConstraint
+    end
+end
+
+function Box:removeDragConstraints()
+    self:disableDragConstraints()
+    self._linearDragConstraint = nil
+    self._rotDragConstraint = nil
+end
+
+function Box:enableDragConstraints()
+    if self._linearDragConstraint then World.space:addConstraint(self._linearDragConstraint) end
+    if self._rotDragConstraint then World.space:addConstraint(self._rotDragConstraint) end
+end
+
+function Box:disableDragConstraints()
+    if self._linearDragConstraint then World.space:removeConstraint(self._linearDragConstraint) end
+    if self._rotDragConstraint then World.space:removeConstraint(self._rotDragConstraint) end
 end
 
 function Box:update()
@@ -122,7 +146,7 @@ function Box:update()
     end
 end
 
-function Box:updateLinearDrag()
+function Box:updateDrag()
     if (self._linearDragConstraint ~= nil) then
         local drag = 0
         local friction = 0
@@ -139,9 +163,6 @@ function Box:updateLinearDrag()
         friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
         self._linearDragConstraint:setMaxForce(drag + friction)
     end
-end
-
-function Box:updateRotationalDrag()
     if self._rotDragConstraint ~= nil then
         local frictionCoeff = self.stiction
         local vx, vy = self._body:getVelocity()

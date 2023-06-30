@@ -24,40 +24,62 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     self.mass = mass
     self.moment = moment
 
-    local linearDragConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
-    if linearDragConstraint ~= nil then
-        linearDragConstraint:setMaxBias(0) -- we don't actually want to pivot
-        linearDragConstraint:setMaxForce(0) -- update will set this
+    if Settings.dragEnabled then
+        self:addDragConstraints()
     end
-    self._linearDragConstraint = linearDragConstraint
-    
-     local rotDragConstraint = chipmunk.constraint.newGearJoint(self._body, World.staticBody, 0, 1)
-     if rotDragConstraint ~= nil then
-        rotDragConstraint:setMaxBias(0)
-        rotDragConstraint:setMaxForce(0)
-     end
-     self._rotDragConstraint = rotDragConstraint
-    
 end
 
 function Disc:addSprite()
     Disc.super.addSprite(self)
     print("Disc:addSprite()")
-    if self._linearDragConstraint then World.space:addConstraint(self._linearDragConstraint) end
-    if self._rotDragConstraint then World.space:addConstraint(self._rotDragConstraint) end
+    self:enableDragConstraints()
     World.space:addBody(self._body)
 end
 
 function Disc:removeSprite()
-    if self._linearDragConstraint then World.space:removeConstraint(self._linearDragConstraint) end
-    if self._rotDragConstraint then World.space:removeConstraint(self._rotDragConstraint) end
-   Disc.super.removeSprite(self)
+    self:disableDragConstraints()
+    Disc.super.removeSprite(self)
     World.space:removeBody(self._body)
     print("Disc:removeSprite()")
 end
 
+function Disc:addDragConstraints()
+    if not self._linearDragConstraint then
+        local linearDragConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
+        if linearDragConstraint ~= nil then
+            linearDragConstraint:setMaxBias(0) -- we don't actually want to pivot
+            linearDragConstraint:setMaxForce(0) -- update will set this
+        end
+        self._linearDragConstraint = linearDragConstraint
+    end
+    if not self._rotDragConstraint then
+        local rotDragConstraint = chipmunk.constraint.newGearJoint(self._body, World.staticBody, 0, 1)
+        if rotDragConstraint ~= nil then
+        rotDragConstraint:setMaxBias(0)
+        rotDragConstraint:setMaxForce(0)
+        end
+        self._rotDragConstraint = rotDragConstraint
+    end
+end
+
+function Disc:removeDragConstraints()
+    self:disableDragConstraints()
+    self._linearDragConstraint = nil
+    self._rotDragConstraint = nil
+end
+
+function Disc:enableDragConstraints()
+    if self._linearDragConstraint then World.space:addConstraint(self._linearDragConstraint) end
+    if self._rotDragConstraint then World.space:addConstraint(self._rotDragConstraint) end
+end
+
+function Disc:disableDragConstraints()
+    if self._linearDragConstraint then World.space:removeConstraint(self._linearDragConstraint) end
+    if self._rotDragConstraint then World.space:removeConstraint(self._rotDragConstraint) end
+end
+
 -- update linear fluid drag and linear friction against the floor play surface
-function Disc:updateLinearDrag()
+function Disc:updateDrag()
     if (self._linearDragConstraint ~= nil) then
         local drag = 0
         local friction = 0
@@ -73,9 +95,6 @@ function Disc:updateLinearDrag()
         friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
         self._linearDragConstraint:setMaxForce(drag + friction)
     end
-end
-
-function Disc:updateRotationalDrag()
     if self._rotDragConstraint ~= nil then
         local frictionCoeff = self.stiction
         local vx, vy = self._body:getVelocity()
@@ -93,5 +112,6 @@ end
 
 function Disc:__gc()
     print("destroying disc")
+    self:removeDragConstraints() --FIXME: verify needed
     Disc.super.__gc(self)
 end
