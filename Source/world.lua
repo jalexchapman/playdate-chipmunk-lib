@@ -12,7 +12,8 @@ function World:setup()
     self.staticBody = self.space:getStaticBody()
     self.space:setDamping(1.0) -- no damping    
     self.gravity = {x=0, y=0, z=0}
-    self.crankBody = chipmunk.body.newKinematic() -- this body represents the crank angle/velocity
+    self.crankBody = chipmunk.body.newKinematic()
+    self.space:addBody(self.crankBody) -- this body represents the crank angle/velocity
 end
 
 -- Set gravity direction and magnitude relative to maxGravity:

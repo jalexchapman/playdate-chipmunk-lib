@@ -77,8 +77,8 @@ function Circle:draw()
     gfx.fillCircleAtPoint(self.radius, self.radius, self.radius)
     local a = self.angle
     local r = self.radius
-    local xEdge = math.cos(a) * r
-    local yEdge = math.sin(a) * r
+    local xEdge = -1 * math.sin(a) * r
+    local yEdge = math.cos(a) * r
     gfx.setColor(gfx.kColorWhite)
     gfx.drawLine(r + xEdge, r + yEdge, r - xEdge, r - yEdge)
 end

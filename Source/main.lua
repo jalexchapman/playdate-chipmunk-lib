@@ -198,7 +198,9 @@ function updateInputs()
     if Settings.accelEnabled then
         updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
     end
-    CrankAngle = playdate.getCrankPosition() or 0
+    if not playdate.isCrankDocked() then
+        CrankAngle = playdate.getCrankPosition() or 0        
+    end
 end
 
 function updateChipmunk(dtSeconds)
@@ -207,6 +209,11 @@ function updateChipmunk(dtSeconds)
 end
 
 function turnCrankBodyTo(targetAngleDeg, dtSeconds)
+    if dtSeconds <= 0 then
+        print("ERROR: dtSeconds must be positive! Value given: " .. dtSeconds)
+        return
+    end
+
     local targetAngle = math.rad(targetAngleDeg)
     local currentAngle = World.crankBody:getAngle()
     local diff = targetAngle - currentAngle
@@ -216,7 +223,7 @@ function turnCrankBodyTo(targetAngleDeg, dtSeconds)
     while diff < -1 * math.pi do
         diff += 2 * math.pi
     end
-    --World.crankBody:setAngularVelocity(diff / dtSeconds) --FIXME: crash here??
+    World.crankBody:setAngularVelocity(diff / dtSeconds)
 end
 
 function updateGraphics()
@@ -248,11 +255,12 @@ function fixedRefresh() --derived from https://gafferongames.com/post/fix_your_t
     while StepAccumulator >= FixedStepMs and steps < MaxStepsPerFrame do
         steps = steps + 1
         StepAccumulator -= FixedStepMs
-        updateChipmunk(fixedStepSec)
     end
 
-    local totalTimeSimulated = steps * FixedStepMs
-    turnCrankBodyTo(CrankAngle, totalTimeSimulated)
+    if steps > 0 then
+        local totalTimeSimulated = steps * fixedStepSec
+        turnCrankBodyTo(CrankAngle, totalTimeSimulated)
+    end
 
     for i=1, steps do
         updateChipmunk(fixedStepSec)
