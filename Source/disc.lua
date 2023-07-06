@@ -106,6 +106,8 @@ function Disc:enablePositionCrank()
     if self._positionCrankConstraint == nil then
         self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
     end
+    self._positionCrankConstraint:setMaxBias(2 * MaxCrankForce)
+    self._positionCrankConstraint:setMaxForce(MaxCrankForce)
     World.space:addConstraint(self._positionCrankConstraint)
 end
 
@@ -119,7 +121,6 @@ function Disc:disablePositionCrank()
         World.space:removeConstraint(self._positionCrankConstraint)
         self._positionCrankConstraint = nil
     end
-
 end
 
 

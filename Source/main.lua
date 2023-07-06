@@ -17,6 +17,8 @@ LastUpdate = 0
 DynamicObjects = {}
 CrankAngle = 0
 
+MaxCrankForce = 80000
+
 local world_setup = false
 
 local stiction = 0.3

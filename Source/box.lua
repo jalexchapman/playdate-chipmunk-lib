@@ -68,6 +68,9 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     if Settings.dragEnabled then
         self:addDragConstraints()
     end
+    if Settings.inputMode == InputModes.positionCrank then
+        self:enablePositionCrank()
+    end
     self:addSprite()
 
     print("New box " .. width .. "x" .. height .. " at (" .. x .."," .. y ..")")
@@ -100,6 +103,23 @@ function Box:removeDragConstraints()
     self._linearDragConstraint = nil
     self._rotDragConstraint = nil
 end
+
+function Box:enablePositionCrank()
+    if self._positionCrankConstraint == nil then
+        self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
+    end
+    self._positionCrankConstraint:setMaxBias(2 * MaxCrankForce)
+    self._positionCrankConstraint:setMaxForce(MaxCrankForce)
+    World.space:addConstraint(self._positionCrankConstraint)
+end
+
+function Box:disablePositionCrank()
+    if self._positionCrankConstraint ~= nil then
+        World.space:removeConstraint(self._positionCrankConstraint)
+        self._positionCrankConstraint = nil
+    end
+end
+
 
 function Box:update()
     local a = self._body:getAngle()
@@ -166,6 +186,7 @@ function Box:draw()
 end
 
 function Box:__gc()
+    self:disablePositionCrank()
     self:removeDragConstraints()
     World.space:removeShape(self._shape)
     World.space:removeBody(self._body)
