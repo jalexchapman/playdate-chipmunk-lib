@@ -37,7 +37,7 @@ end
 function addRandomCircle()
     local radius = math.random(5, 30)
     local density = 0.003
-    local friction = 0.3
+    local friction = 0.5
     local elasticity = 0.8
     local x = math.random(radius + 1, 399 - radius)
     local y = math.random(radius + 1, 239 - radius)
@@ -53,7 +53,7 @@ function addRandomBox()
     local halfwidth = math.random(3, 20)
     local halfheight = math.random(3,20)
     local density = 0.003
-    local friction = 0.3
+    local friction = 0.5
     local elasticity = 0.8
     local x = math.random(halfwidth + 1, 399 - halfwidth)
     local y = math.random(halfheight + 1, 239 - halfheight)
