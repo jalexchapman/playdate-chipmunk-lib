@@ -15,6 +15,7 @@ StepAccumulator = 0
 MaxStepsPerFrame = 7 --allow slowdown if it frame time is over 70ms - 15fps may be tolerable
 LastUpdate = 0
 DynamicObjects = {}
+CrankAngle = 0
 
 local world_setup = false
 
@@ -41,7 +42,6 @@ function addRandomCircle()
 
     local newDisc = Disc(x, y, radius, density, friction, elasticity)
     if (newDisc ~= nil) then
-        newDisc:addSprite()
         table.insert(DynamicObjects, newDisc)
     end
     return newDisc
@@ -60,7 +60,6 @@ function addRandomBox()
         density, friction, elasticity
     )
     if newBox ~= nil then
-        newBox:addSprite()
         table.insert(DynamicObjects, newBox)
     end
     return newBox
@@ -72,7 +71,6 @@ function addPeg(r, x, y)
     local elasticity = 0.7
     local peg = Circle(World.staticBody, x, y, r, friction, elasticity)
     print("Adding peg size " .. r .. " at " .. x .."," .. y)
-    peg:addSprite()
     return peg
 end
 
@@ -200,11 +198,25 @@ function updateInputs()
     if Settings.accelEnabled then
         updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
     end
+    CrankAngle = playdate.getCrankPosition() or 0
 end
 
 function updateChipmunk(dtSeconds)
     updateFrictionAndDragValues()
     World.space:step(dtSeconds)
+end
+
+function turnCrankBodyTo(targetAngleDeg, dtSeconds)
+    local targetAngle = math.rad(targetAngleDeg)
+    local currentAngle = World.crankBody:getAngle()
+    local diff = targetAngle - currentAngle
+    while diff > math.pi do
+        diff -= 2 * math.pi
+    end
+    while diff < -1 * math.pi do
+        diff += 2 * math.pi
+    end
+    --World.crankBody:setAngularVelocity(diff / dtSeconds) --FIXME: crash here??
 end
 
 function updateGraphics()
@@ -236,6 +248,13 @@ function fixedRefresh() --derived from https://gafferongames.com/post/fix_your_t
     while StepAccumulator >= FixedStepMs and steps < MaxStepsPerFrame do
         steps = steps + 1
         StepAccumulator -= FixedStepMs
+        updateChipmunk(fixedStepSec)
+    end
+
+    local totalTimeSimulated = steps * FixedStepMs
+    turnCrankBodyTo(CrankAngle, totalTimeSimulated)
+
+    for i=1, steps do
         updateChipmunk(fixedStepSec)
     end
 

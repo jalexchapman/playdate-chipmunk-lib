@@ -33,17 +33,9 @@ function Circle:init(body, xOffset, yOffset, radius, friction, elasticity)
     self:setSize(radius * 2 + 1, radius * 2 + 1)
     self:setCenter(0.5, 0.5)
     self:moveTo(x, y)
-end
 
-function Circle:addSprite()
-    Circle.super.addSprite(self)
     World.space:addShape(self._shape)
-    print("Circle:addSprite()")
-end
-
-function Circle:removeSprite()
-    World.space:removeShape(self._shape)
-    Circle.super.removeSprite(self)
+    self:addSprite()
 end
 
 function Circle:update()
@@ -92,6 +84,7 @@ function Circle:draw()
 end
 
 function Circle:__gc()
+    World.space:removeShape(self._shape)
     self:removeSprite()
     Circle.super.__gc(self)
 end

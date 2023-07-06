@@ -63,26 +63,14 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     self:setCenter(0.5, 0.5)
     self:moveTo(x, y)
 
+    World.space:addShape(self._shape)
+    World.space:addBody(self._body)
     if Settings.dragEnabled then
         self:addDragConstraints()
     end
+    self:addSprite()
+
     print("New box " .. width .. "x" .. height .. " at (" .. x .."," .. y ..")")
-end
-
-function Box:addSprite()
-    Box.super.addSprite(self)
-    World.space:addShape(self._shape)
-    World.space:addBody(self._body)
-    self:enableDragConstraints()
-    print("Box:addSprite()")
-end
-
-function Box:removeSprite()
-    self:disableDragConstraints()
-    World.space:removeShape(self._shape)
-    World.space:removeBody(self._body)
-    Box.super.removeSprite(self)
-    print("Box:removeSprite()")
 end
 
 function Box:addDragConstraints()
@@ -91,6 +79,7 @@ function Box:addDragConstraints()
         if linearDragConstraint ~= nil then
             linearDragConstraint:setMaxBias(0) -- we don't actually want to pivot
             linearDragConstraint:setMaxForce(0) -- update will set this
+            World.space:addConstraint(linearDragConstraint)
         end
         self._linearDragConstraint = linearDragConstraint
     end
@@ -99,25 +88,17 @@ function Box:addDragConstraints()
         if rotDragConstraint ~= nil then
             rotDragConstraint:setMaxBias(0)
             rotDragConstraint:setMaxForce(0)
+            World.space:addConstraint(rotDragConstraint)
         end
         self._rotDragConstraint = rotDragConstraint
     end
 end
 
 function Box:removeDragConstraints()
-    self:disableDragConstraints()
-    self._linearDragConstraint = nil
-    self._rotDragConstraint = nil
-end
-
-function Box:enableDragConstraints()
-    if self._linearDragConstraint then World.space:addConstraint(self._linearDragConstraint) end
-    if self._rotDragConstraint then World.space:addConstraint(self._rotDragConstraint) end
-end
-
-function Box:disableDragConstraints()
     if self._linearDragConstraint then World.space:removeConstraint(self._linearDragConstraint) end
     if self._rotDragConstraint then World.space:removeConstraint(self._rotDragConstraint) end
+    self._linearDragConstraint = nil
+    self._rotDragConstraint = nil
 end
 
 function Box:update()
@@ -185,6 +166,9 @@ function Box:draw()
 end
 
 function Box:__gc()
+    self:removeDragConstraints()
+    World.space:removeShape(self._shape)
+    World.space:removeBody(self._body)
     self:removeSprite()
     Box.super.__gc(self)
 end

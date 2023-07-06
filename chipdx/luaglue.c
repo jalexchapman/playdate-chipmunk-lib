@@ -408,6 +408,14 @@ int chipmunk_body_getAngularVelocity(lua_State* L){
     return 1;
 }
 
+int chipmunk_body_setAngularVelocity(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    cpFloat w = pd->lua->getArgFloat(2);
+    cpBodySetAngularVelocity(body, w);
+    return 0;
+}
+
+
 int chipmunk_body_getForce(lua_State* L){
     cpBody* body = getBodyArg(1);
     cpVect f = cpBodyGetForce(body);
@@ -461,6 +469,7 @@ static const lua_reg bodyClass[] = {
     {"setAngle", chipmunk_body_setAngle},
     {"getVelocity", chipmunk_body_getVelocity},
     {"getAngularVelocity", chipmunk_body_getAngularVelocity},
+    {"setAngularVelocity", chipmunk_body_setAngularVelocity},
     {"getForce", chipmunk_body_getForce},
     {"setForce", chipmunk_body_setForce},
     {"getTorque", chipmunk_body_getTorque},
