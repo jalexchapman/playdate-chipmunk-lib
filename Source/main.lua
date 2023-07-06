@@ -184,6 +184,30 @@ local function updatePhysConstants()
     end
 end
 
+local function updatePositionCrankSettings()
+    local forceChanged = false
+    if playdate.buttonIsPressed(playdate.kButtonDown)
+    then
+        forceChanged = true
+        MaxCrankForce *= 0.975
+    end
+    if playdate.buttonIsPressed(playdate.kButtonUp) then 
+        forceChanged = true
+        MaxCrankForce *= 1.015
+    end
+    if forceChanged then
+        for _, object in ipairs(DynamicObjects) do
+            if object.setPositionCrankForce ~= nil then
+                object:setPositionCrankForce(MaxCrankForce)
+            end
+        end
+    end
+end
+
+local function drawPositionCrankSettings(x, y)
+    gfx.drawText(string.format("Torque: %.0f", MaxCrankForce), x, y)
+end
+
 local function updateFrictionAndDragValues()
     if Settings.dragEnabled then
         for _, item in ipairs(DynamicObjects) do
@@ -196,13 +220,16 @@ end
 function updateInputs()
     if Settings.inputMode == InputModes.setConstants then
         updatePhysConstants()
+    elseif Settings.inputMode == InputModes.positionCrank then
+        updatePositionCrankSettings()
     end
     if Settings.accelEnabled then
         updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
     end
     if not playdate.isCrankDocked() then
-        CrankAngle = playdate.getCrankPosition() or 0        
+        CrankAngle = playdate.getCrankPosition() or 0     
     end
+
 end
 
 function updateChipmunk(dtSeconds)
@@ -232,6 +259,8 @@ function updateGraphics()
     gfx.sprite.update()
     if Settings.inputMode == InputModes.setConstants then
         drawPhysConstants(0,0)
+    elseif Settings.inputMode == InputModes.positionCrank then
+        drawPositionCrankSettings(0,0)
     end
 end
 
