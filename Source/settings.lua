@@ -21,18 +21,18 @@ function Settings.disablePositionCrank()
     end
 end
 
-function Settings.disableTorqueCrank()
-    for _, item in ipairs(DynamicObjects) do
-        if item.disableTorqueCrank ~= nil then
-            item:disableTorqueCrank()
-        end
-    end
-end
-
 function Settings.enablePositionCrank()
     for _, item in ipairs(DynamicObjects) do
         if item.enablePositionCrank ~= nil then
             item:enablePositionCrank()
+        end
+    end
+end
+
+function Settings.disableTorqueCrank()
+    for _, item in ipairs(DynamicObjects) do
+        if item.disableTorqueCrank ~= nil then
+            item:disableTorqueCrank()
         end
     end
 end
@@ -45,26 +45,35 @@ function Settings.enableTorqueCrank()
     end
 end
 
+function Settings.disableEditor()
+    EditorSprite:removeSprite()
+end
+
+function Settings.enableEditor()
+    EditorSprite:addSprite()
+end
 
 function Settings.menuSetup()
     local menu = playdate.getSystemMenu()
     menu:addOptionsMenuItem("mode", {"const", "edit", "crank1", "crank2"}, "const", 
     function(value)
+        if Settings.inputMode == InputModes.positionCrank then
+            Settings.disablePositionCrank()
+        elseif Settings.inputMode == InputModes.torqueCrank then
+            Settings.disableTorqueCrank()
+        elseif Settings.inputMode == InputModes.editObjects then
+            Settings.disableEditor()
+        end
         if value == "const" then
             Settings.inputMode = InputModes.setConstants
-            Settings.disablePositionCrank()
-            Settings.disableTorqueCrank()
         elseif value == "edit" then
             Settings.inputMode = InputModes.editObjects
-            Settings.disablePositionCrank()
-            Settings.disableTorqueCrank()
+            Settings.enableEditor()
         elseif value == "crank1" then
             Settings.inputMode = InputModes.positionCrank
             Settings.enablePositionCrank()
-            Settings.disableTorqueCrank()
         elseif value == "crank2" then
             Settings.inputMode = InputModes.torqueCrank
-            Settings.disablePositionCrank()
             Settings.enableTorqueCrank()
         end
     end)

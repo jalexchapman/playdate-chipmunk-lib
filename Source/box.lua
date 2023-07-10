@@ -61,6 +61,7 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     --gfx.sprite stuff
     self:setSize(width, height)
     self:setCenter(0.5, 0.5)
+    self:setCollideRect(0, 0, width, height)
     self:moveTo(x, y)
 
     World.space:addShape(self._shape)
@@ -72,8 +73,6 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
         self:enablePositionCrank()
     end
     self:addSprite()
-
-    print("New box " .. width .. "x" .. height .. " at (" .. x .."," .. y ..")")
 end
 
 function Box:addDragConstraints()
@@ -149,6 +148,7 @@ function Box:update()
         local _, _, aabbWidth, aabbHeight = self.polygon:getBounds()
         self.polygon:translate(aabbWidth/2, aabbHeight/2)
         self:setSize(aabbWidth, aabbHeight)
+        self:setCollideRect(0, 0, aabbWidth, aabbHeight)
     end
 end
 

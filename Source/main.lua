@@ -6,6 +6,7 @@ import "disc.lua"
 import "world.lua"
 import "box.lua"
 import "settings.lua"
+import "editor.lua"
 
 local gfx = playdate.graphics
 gfx.setColor(gfx.kColorBlack)
@@ -18,6 +19,7 @@ DynamicObjects = {}
 CrankAngle = 0
 
 MaxCrankForce = 80000
+EditorSprite = nil
 
 local world_setup = false
 
@@ -25,9 +27,9 @@ local stiction = 0.3
 local sliction = 0.25
 local dragCoeff = 0.0015
 
-wallSegments = {}
-allConstraints = {}
-DynamicObjects = {}
+wallSegments = {} -- fixme: local?
+DynamicObjects = {} -- fixme: local?
+
 
 function updateGravity()
     local x, y, z = playdate.readAccelerometer()
@@ -94,6 +96,9 @@ function setup()
     World:setup()
     
     Settings.menuSetup()
+
+    EditorSprite = Editor()
+
 
     wallSegments = {
         chipmunk.shape.newSegment(World.staticBody,-20,-20,420,-20,20),
@@ -222,6 +227,8 @@ function updateInputs()
         updatePhysConstants()
     elseif Settings.inputMode == InputModes.positionCrank then
         updatePositionCrankSettings()
+    elseif Settings.inputMode == InputModes.editObjects then
+        EditorSprite:handleInput()
     end
     if Settings.accelEnabled then
         updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
@@ -233,8 +240,10 @@ function updateInputs()
 end
 
 function updateChipmunk(dtSeconds)
-    updateFrictionAndDragValues()
-    World.space:step(dtSeconds)
+    if Settings.inputMode ~= InputModes.editObjects then -- pause simulation in editor
+        updateFrictionAndDragValues()
+        World.space:step(dtSeconds)
+    end
 end
 
 function turnCrankBodyTo(targetAngleDeg, dtSeconds)

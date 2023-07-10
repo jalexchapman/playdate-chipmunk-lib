@@ -30,8 +30,10 @@ function Circle:init(body, xOffset, yOffset, radius, friction, elasticity)
     self._shape:setElasticity(elasticity)
 
     --gfx.sprite stuff
-    self:setSize(radius * 2 + 1, radius * 2 + 1)
+    local diameter=  radius * 2 + 1
+    self:setSize(diameter, diameter)
     self:setCenter(0.5, 0.5)
+    self:setCollideRect(0, 0, diameter, diameter)
     self:moveTo(x, y)
 
     World.space:addShape(self._shape)

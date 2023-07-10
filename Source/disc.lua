@@ -130,11 +130,7 @@ end
 
 
 function Disc:disableTorqueCrank()
-    if self._torqueCrankConstraint ~= nil then
-        World.space:removeConstraint(self._torqueCrankConstraint)
-        self._torqueCrankConstraint = nil
-    end
-
+    print("disableTorqueCrank")
 end
 
 function Disc:__gc()
