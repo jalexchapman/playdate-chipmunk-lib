@@ -18,6 +18,10 @@ LastUpdate = 0
 DynamicObjects = {}
 CrankAngle = 0
 
+SolidPattern = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
+ControllablePattern = {0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55}
+PlacementPattern = {0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x00}
+
 MaxCrankForce = 80000
 EditorSprite = nil
 
@@ -28,7 +32,7 @@ local sliction = 0.25
 local dragCoeff = 0.0015
 
 wallSegments = {} -- fixme: local?
-DynamicObjects = {} -- fixme: local?
+DynamicObjects = {}
 
 
 function updateGravity()
@@ -91,7 +95,6 @@ function addPegs()
 end
 
 function setup()
-    playdate.startAccelerometer()
     playdate.display.setRefreshRate(0) --update has its own frame limiter
     World:setup()
     

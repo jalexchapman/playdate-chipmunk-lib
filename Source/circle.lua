@@ -36,6 +36,8 @@ function Circle:init(body, xOffset, yOffset, radius, friction, elasticity)
     self:setCollideRect(0, 0, diameter, diameter)
     self:moveTo(x, y)
 
+    self.alpha = 1.0
+
     World.space:addShape(self._shape)
     self:addSprite()
 end
@@ -75,14 +77,34 @@ function Circle:update()
 end
 
 function Circle:draw()
+    local pattern = SolidPattern
+    local useOutline = false
     gfx.setColor(gfx.kColorBlack)
-    gfx.fillCircleAtPoint(self.radius, self.radius, self.radius)
-    local a = self.angle
-    local r = self.radius
-    local xEdge = -1 * math.sin(a) * r
-    local yEdge = math.cos(a) * r
+    if self.isControllable then
+        pattern = ControllablePattern
+        useOutline = true
+    end
+    Circle.drawArbitrary(self.radius, self.angle, pattern, gfx.kColorBlack, useOutline)
+end
+
+function Circle.drawArbitrary(radius, angle, pattern, color, useOutline)
+    gfx.setColor(color)
+    gfx.setPattern(pattern)
+    gfx.fillCircleAtPoint(radius, radius, radius)
+    gfx.setPattern(SolidPattern)
+    if useOutline then
+        gfx.drawCircleAtPoint(radius, radius, radius)
+    end
+    local xEdge = -1 * math.sin(angle) * radius
+    local yEdge = math.cos(angle) * radius
     gfx.setColor(gfx.kColorWhite)
-    gfx.drawLine(r + xEdge, r + yEdge, r - xEdge, r - yEdge)
+    gfx.drawLine(
+        radius + xEdge, radius + yEdge,
+        radius - xEdge, radius - yEdge)
+    if useOutline then
+        gfx.setColor(color)
+        gfx.drawCircleAtPoint(radius, radius, radius)
+    end
 end
 
 function Circle:__gc()

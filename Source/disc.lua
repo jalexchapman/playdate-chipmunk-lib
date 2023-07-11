@@ -26,6 +26,8 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     self.mass = mass
     self.moment = moment
 
+    self.isControllable = false
+
     if Settings.dragEnabled then
         self:addDragConstraints()
     end
@@ -103,11 +105,13 @@ function Disc:updateDrag()
 end
 
 function Disc:enablePositionCrank()
-    if self._positionCrankConstraint == nil then
-        self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
+    if self.isControllable then
+        if self._positionCrankConstraint == nil then
+            self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
+        end
+        self:setPositionCrankForce(MaxCrankForce)
+        World.space:addConstraint(self._positionCrankConstraint)
     end
-    self:setPositionCrankForce(MaxCrankForce)
-    World.space:addConstraint(self._positionCrankConstraint)
 end
 
 function Disc:setPositionCrankForce(force)
@@ -118,7 +122,9 @@ function Disc:setPositionCrankForce(force)
 end
 
 function Disc:enableTorqueCrank()
-    print("enableTorqueCrank()")
+    if self.isControllable then
+        print("enableTorqueCrank()")
+    end
 end
 
 function Disc:disablePositionCrank()
@@ -128,9 +134,18 @@ function Disc:disablePositionCrank()
     end
 end
 
-
 function Disc:disableTorqueCrank()
     print("disableTorqueCrank")
+end
+
+function Disc:toggleControl()
+    self:markDirty()
+    self.isControllable = not self.isControllable
+    if (self.isControllable) then
+        print("Enabling control on disc")
+    else
+        print("Disabling control on disc")
+    end
 end
 
 function Disc:__gc()

@@ -67,6 +67,11 @@ function Editor:update()
     if playdate.buttonJustPressed(playdate.kButtonB) then
         printTable(self:overlappingSprites())
     end
+    
+    if playdate.buttonJustPressed(playdate.kButtonA) then
+        if self.currentMode == EditorModes.delete then self:deleteHere() end
+        if self.currentMode == EditorModes.toggleControl then self:toggleControlHere() end
+    end
 end
 
 function Editor:enableMode(modeNum)
@@ -88,5 +93,28 @@ function Editor:enableMode(modeNum)
         self:setImage(toggleControlImage)
         self.currentMode = EditorModes.toggleControl
         printTable(self:getImage())
+    end
+end
+
+function Editor:deleteHere()
+    local targets = self:overlappingSprites()
+    for _, target in ipairs(targets) do
+        local hit = false
+        for i = #DynamicObjects, 1, -1 do
+            if DynamicObjects[i] == target then
+                hit = true
+                table.remove(DynamicObjects, i) -- shouldn't be dupes, but just to make sure, continue
+            end
+        end
+        if hit then
+            target:removeSprite()
+        end
+    end
+end
+
+function Editor:toggleControlHere()
+    local targets = self:overlappingSprites()
+    for _, target in ipairs(targets) do
+        if target.toggleControl ~= nil then target:toggleControl() end
     end
 end

@@ -80,7 +80,10 @@ function Settings.menuSetup()
     menu:addCheckmarkMenuItem("tilt", true, function(value)
         Settings.accelEnabled = value
         if not value then
+            playdate.stopAccelerometer()
             World:setGravity(0,1,0)
+        else
+            playdate.startAccelerometer()
         end
     end)
     menu:addCheckmarkMenuItem("drag", false, function(value)

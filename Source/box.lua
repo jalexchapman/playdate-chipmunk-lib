@@ -64,8 +64,13 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     self:setCollideRect(0, 0, width, height)
     self:moveTo(x, y)
 
+    self.pattern = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}
+
     World.space:addShape(self._shape)
     World.space:addBody(self._body)
+
+    self.isControllable = false
+
     if Settings.dragEnabled then
         self:addDragConstraints()
     end
@@ -104,11 +109,13 @@ function Box:removeDragConstraints()
 end
 
 function Box:enablePositionCrank()
-    if self._positionCrankConstraint == nil then
-        self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
+    if self.isControllable then
+        if self._positionCrankConstraint == nil then
+            self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
+        end
+        self:setPositionCrankForce(MaxCrankForce)
+        World.space:addConstraint(self._positionCrankConstraint)
     end
-    self:setPositionCrankForce(MaxCrankForce)
-    World.space:addConstraint(self._positionCrankConstraint)
 end
 
 function Box:setPositionCrankForce(force)
@@ -123,6 +130,17 @@ function Box:disablePositionCrank()
         World.space:removeConstraint(self._positionCrankConstraint)
         self._positionCrankConstraint = nil
     end
+end
+
+function Box:toggleControl()
+    self:markDirty()
+    self.isControllable = not self.isControllable
+    if (self.isControllable) then
+        print("Enabling control on box")
+    else
+        print("Disabling control on box")
+    end
+
 end
 
 function Box:update()
@@ -147,7 +165,7 @@ function Box:update()
         self.polygon = self.startingPolygon * self.rotationTransform
         local _, _, aabbWidth, aabbHeight = self.polygon:getBounds()
         self.polygon:translate(aabbWidth/2, aabbHeight/2)
-        self:setSize(aabbWidth, aabbHeight)
+        self:setSize(aabbWidth + 1, aabbHeight + 1)
         self:setCollideRect(0, 0, aabbWidth, aabbHeight)
     end
 end
@@ -186,8 +204,23 @@ function Box:updateDrag()
 end
 
 function Box:draw()
-    gfx.setColor(gfx.kColorBlack)
-    gfx.fillPolygon(self.polygon)
+    local pattern = SolidPattern
+    local outline = false
+    if self.isControllable then 
+        pattern = ControllablePattern
+        outline = true
+    end
+    Box.drawArbitrary(self.polygon, pattern, gfx.kColorBlack, outline)
+end
+
+function Box.drawArbitrary(polygon, pattern, color, useOutline)
+    gfx.setColor(color)
+    gfx.setPattern(pattern)
+    gfx.fillPolygon(polygon)
+    gfx.setPattern(SolidPattern)
+    if useOutline then
+        gfx.drawPolygon(polygon)
+    end
 end
 
 function Box:__gc()
