@@ -17,6 +17,7 @@ MaxStepsPerFrame = 7 --allow slowdown if it frame time is over 70ms - 15fps may 
 LastUpdate = 0
 DynamicObjects = {}
 CrankAngle = 0
+CrankDelta = 0
 
 DefaultObjectDensity = 0.003
 DefaultObjectFriction = 0.5
@@ -26,6 +27,7 @@ SolidPattern = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
 ControllablePattern = {0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55}
 PlacementPattern = {0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55}
 
+TorqueCrankPower = 8000
 MaxCrankForce = 80000
 EditorSprite = nil
 
@@ -217,6 +219,23 @@ local function drawPositionCrankSettings(x, y)
     gfx.drawText(string.format("Torque: %.0f", MaxCrankForce), x, y)
 end
 
+local function updateTorqueCrankSettings()
+    local forceChanged = false
+    if playdate.buttonIsPressed(playdate.kButtonDown)
+    then
+        forceChanged = true
+        TorqueCrankPower *= 0.975
+    end
+    if playdate.buttonIsPressed(playdate.kButtonUp) then 
+        forceChanged = true
+        TorqueCrankPower *= 1.015
+    end
+end
+
+local function drawTorqueCrankSettings(x, y)
+    gfx.drawText(string.format("Torque: %.0f", TorqueCrankPower), x, y)
+end
+
 local function updateFrictionAndDragValues()
     if Settings.dragEnabled then
         for _, item in ipairs(DynamicObjects) do
@@ -227,18 +246,23 @@ local function updateFrictionAndDragValues()
 end
 
 function updateInputs()
+    if not playdate.isCrankDocked() then
+        CrankDelta = playdate.getCrankChange()
+        CrankAngle = playdate.getCrankPosition()
+    else
+        CrankDelta = 0
+        CrankAngle = 0
+    end
     if Settings.inputMode == InputModes.setConstants then
         updatePhysConstants()
     elseif Settings.inputMode == InputModes.positionCrank then
         updatePositionCrankSettings()
+    elseif Settings.inputMode == InputModes.torqueCrank then
+        updateTorqueCrankSettings()
     end
     if Settings.accelEnabled then
-        updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
+        updateGravity()
     end
-    if not playdate.isCrankDocked() then
-        CrankAngle = playdate.getCrankPosition() or 0
-    end
-
 end
 
 function updateChipmunk(dtSeconds)
@@ -272,6 +296,8 @@ function updateGraphics()
         drawPhysConstants(0,0)
     elseif Settings.inputMode == InputModes.positionCrank then
         drawPositionCrankSettings(0,0)
+    elseif Settings.inputMode == InputModes.torqueCrank then
+        drawTorqueCrankSettings(0,0)
     end
 end
 
