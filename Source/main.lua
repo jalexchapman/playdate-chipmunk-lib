@@ -18,9 +18,13 @@ LastUpdate = 0
 DynamicObjects = {}
 CrankAngle = 0
 
+DefaultObjectDensity = 0.003
+DefaultObjectFriction = 0.5
+DefaultObjectElasticity = 0.8
+
 SolidPattern = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
 ControllablePattern = {0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55}
-PlacementPattern = {0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x00}
+PlacementPattern = {0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55}
 
 MaxCrankForce = 80000
 EditorSprite = nil
@@ -42,13 +46,10 @@ end
 
 function addRandomCircle()
     local radius = math.random(5, 30)
-    local density = 0.003
-    local friction = 0.5
-    local elasticity = 0.8
     local x = math.random(radius + 1, 399 - radius)
     local y = math.random(radius + 1, 239 - radius)
 
-    local newDisc = Disc(x, y, radius, density, friction, elasticity)
+    local newDisc = Disc(x, y, radius, DefaultObjectDensity, DefaultObjectFriction, DefaultObjectElasticity)
     if (newDisc ~= nil) then
         table.insert(DynamicObjects, newDisc)
     end
@@ -58,14 +59,11 @@ end
 function addRandomBox()
     local halfwidth = math.random(3, 20)
     local halfheight = math.random(3,20)
-    local density = 0.003
-    local friction = 0.5
-    local elasticity = 0.8
     local x = math.random(halfwidth + 1, 399 - halfwidth)
     local y = math.random(halfheight + 1, 239 - halfheight)
 
     local newBox = Box(x, y, halfwidth * 2, halfheight * 2, 2,
-        density, friction, elasticity
+        DefaultObjectDensity, DefaultObjectFriction, DefaultObjectElasticity
     )
     if newBox ~= nil then
         table.insert(DynamicObjects, newBox)
@@ -96,6 +94,7 @@ end
 
 function setup()
     playdate.display.setRefreshRate(0) --update has its own frame limiter
+    playdate.startAccelerometer() --tilt is on by default
     World:setup()
     
     Settings.menuSetup()
@@ -121,6 +120,7 @@ function setup()
        addRandomCircle()
        addRandomBox()
     end
+    DynamicObjects[1]:toggleControl()
     gfx.setBackgroundColor(gfx.kColorWhite)
     gfx.setColor(gfx.kColorWhite)
     gfx.fillRect(0,0,400,240)
@@ -175,6 +175,7 @@ local function updatePhysConstants()
             object.stiction = stiction
             object.sliction = sliction
             object.dragCoeff = dragCoeff
+            object:setEdgeFriction(stiction)
         end
     end
 
@@ -230,8 +231,6 @@ function updateInputs()
         updatePhysConstants()
     elseif Settings.inputMode == InputModes.positionCrank then
         updatePositionCrankSettings()
-    elseif Settings.inputMode == InputModes.editObjects then
-        EditorSprite:handleInput()
     end
     if Settings.accelEnabled then
         updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy

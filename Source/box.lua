@@ -143,6 +143,12 @@ function Box:toggleControl()
 
 end
 
+function Box:setEdgeFriction(frictionCoeff)
+    if frictionCoeff > 0 then
+        self._shape:setFriction(frictionCoeff)
+    end
+end
+
 function Box:update()
     local a = self._body:getAngle()
     local x, y = self._body:getPosition()
@@ -175,26 +181,26 @@ function Box:updateDrag()
         local drag = 0
         local friction = 0
         local crossSection = (self.startingWidth + self.startingHeight) / 2 --fixme: width at rotation - velocity
-        local vx, vy = self._body:getVelocity()
-        local w = self._body:getAngularVelocity()
+        --local vx, vy = self._body:getVelocity()
+        --local w = self._body:getAngularVelocity()
         --viscous drag = dragCoeff * frontal area * v^2; 
-        drag = self.dragCoeff * 2 * crossSection * (vx*vx + vy*vy)
+        --drag = self.dragCoeff * 2 * crossSection * (vx*vx + vy*vy)
         local frictionCoeff = self.stiction
-        if (vx ~=0 or vy ~= 0 or w ~= 0) then
-            frictionCoeff = self.sliction
-        end
+        --if (vx ~=0 or vy ~= 0 or w ~= 0) then
+        --    frictionCoeff = self.sliction
+        --end
         --Coulomb drag = coefficient of friction * normal force
         friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
         self._linearDragConstraint:setMaxForce(drag + friction)
     end
     if self._rotDragConstraint ~= nil then
         local frictionCoeff = self.stiction
-        local vx, vy = self._body:getVelocity()
-        local w = self._body:getAngularVelocity()
+        --local vx, vy = self._body:getVelocity()
+        --local w = self._body:getAngularVelocity()
         local avgRadius = (self.startingWidth + self.startingHeight) / 2
-        if (vx ~=0 or vy ~= 0 or w ~= 0) then
-            frictionCoeff = self.sliction
-        end
+        --if (vx ~=0 or vy ~= 0 or w ~= 0) then
+        --    frictionCoeff = self.sliction
+        --end
         local friction = 0
         -- FIXME: circle is  2/3 coefficient of friction * normal force * radius
         friction = 0.6667 * frictionCoeff * math.abs(World.gravity.z) * self.mass * avgRadius
@@ -210,10 +216,10 @@ function Box:draw()
         pattern = ControllablePattern
         outline = true
     end
-    Box.drawArbitrary(self.polygon, pattern, gfx.kColorBlack, outline)
+    Box.drawStatic(self.polygon, pattern, gfx.kColorBlack, outline)
 end
 
-function Box.drawArbitrary(polygon, pattern, color, useOutline)
+function Box.drawStatic(polygon, pattern, color, useOutline)
     gfx.setColor(color)
     gfx.setPattern(pattern)
     gfx.fillPolygon(polygon)

@@ -46,10 +46,12 @@ function Settings.enableTorqueCrank()
 end
 
 function Settings.disableEditor()
+    playdate.display.setRefreshRate(0)
     EditorSprite:removeSprite()
 end
 
 function Settings.enableEditor()
+    playdate.display.setRefreshRate(30) -- be nice to the battery when we can
     EditorSprite:addSprite()
 end
 

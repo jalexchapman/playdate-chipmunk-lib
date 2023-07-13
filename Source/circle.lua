@@ -84,10 +84,10 @@ function Circle:draw()
         pattern = ControllablePattern
         useOutline = true
     end
-    Circle.drawArbitrary(self.radius, self.angle, pattern, gfx.kColorBlack, useOutline)
+    Circle.drawStatic(self.radius, self.angle, pattern, gfx.kColorBlack, useOutline)
 end
 
-function Circle.drawArbitrary(radius, angle, pattern, color, useOutline)
+function Circle.drawStatic(radius, angle, pattern, color, useOutline)
     gfx.setColor(color)
     gfx.setPattern(pattern)
     gfx.fillCircleAtPoint(radius, radius, radius)

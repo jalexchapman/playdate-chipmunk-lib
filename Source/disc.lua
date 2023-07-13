@@ -77,14 +77,14 @@ function Disc:updateDrag()
     if (self._linearDragConstraint ~= nil) then
         local drag = 0
         local friction = 0
-        local vx, vy = self._body:getVelocity()
-        local w = self._body:getAngularVelocity()
+        --local vx, vy = self._body:getVelocity()
+        --local w = self._body:getAngularVelocity()
         --viscous drag = dragCoeff * frontal area * v^2; 
-        drag = self.dragCoeff * 2 * self.radius * (vx*vx + vy*vy)
+        --drag = self.dragCoeff * 2 * self.radius * (vx*vx + vy*vy)
         local frictionCoeff = self.stiction
-        if (vx ~=0 or vy ~= 0 or w ~= 0) then
-            frictionCoeff = self.sliction
-        end
+        --if (vx ~=0 or vy ~= 0 or w ~= 0) then
+        --    frictionCoeff = self.sliction
+        --end
         --Coulomb drag = coefficient of friction * normal force
         friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
         self._linearDragConstraint:setMaxForce(drag + friction)
@@ -145,6 +145,12 @@ function Disc:toggleControl()
         print("Enabling control on disc")
     else
         print("Disabling control on disc")
+    end
+end
+
+function Disc:setEdgeFriction(frictionCoeff)
+    if frictionCoeff > 0 then
+        self._shape:setFriction(frictionCoeff)
     end
 end
 
