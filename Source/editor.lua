@@ -130,10 +130,10 @@ function Editor:moveCursor(dx, dy)
         dx *= speed
         dy *= speed
         self:moveBy(dx, dy)
-        if self.x < 1 then self.moveTo(1, self.y)
-        elseif self.x > 400 then self.moveTo(400, self.y) end
-        if self.y < 1 then self.moveTo(self.x, 1)
-        elseif self.y > 240 then self.moveTo(self.x, 240) end
+        if self.x < 1 then self:moveTo(1, self.y)
+        elseif self.x > 400 then self:moveTo(400, self.y) end
+        if self.y < 1 then self:moveTo(self.x, 1)
+        elseif self.y > 240 then self:moveTo(self.x, 240) end
     end
 end
 

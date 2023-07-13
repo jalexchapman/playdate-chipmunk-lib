@@ -108,6 +108,7 @@ function Circle.drawStatic(radius, angle, pattern, color, useOutline)
 end
 
 function Circle:__gc()
+    print("destroying circle")
     World.space:removeShape(self._shape)
     self:removeSprite()
     Circle.super.__gc(self)

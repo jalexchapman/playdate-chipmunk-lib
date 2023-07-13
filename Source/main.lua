@@ -236,7 +236,7 @@ function updateInputs()
         updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
     end
     if not playdate.isCrankDocked() then
-        CrankAngle = playdate.getCrankPosition() or 0     
+        CrankAngle = playdate.getCrankPosition() or 0
     end
 
 end

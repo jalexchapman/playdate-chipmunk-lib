@@ -230,6 +230,7 @@ function Box.drawStatic(polygon, pattern, color, useOutline)
 end
 
 function Box:__gc()
+    print("destroying box")
     self:disablePositionCrank()
     self:removeDragConstraints()
     World.space:removeShape(self._shape)
