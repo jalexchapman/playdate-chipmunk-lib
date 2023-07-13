@@ -149,6 +149,13 @@ function Box:setEdgeFriction(frictionCoeff)
     end
 end
 
+function Box:applyTorque(t)
+    if tonumber(t) ~= nil then
+        local currentTorque = self._body:getTorque()
+        self._body:setTorque(t + currentTorque)
+    end
+end
+
 function Box:update()
     local a = self._body:getAngle()
     local x, y = self._body:getPosition()

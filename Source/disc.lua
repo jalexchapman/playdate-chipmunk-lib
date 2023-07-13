@@ -121,21 +121,11 @@ function Disc:setPositionCrankForce(force)
     end
 end
 
-function Disc:enableTorqueCrank()
-    if self.isControllable then
-        print("enableTorqueCrank()")
-    end
-end
-
 function Disc:disablePositionCrank()
     if self._positionCrankConstraint ~= nil then
         World.space:removeConstraint(self._positionCrankConstraint)
         self._positionCrankConstraint = nil
     end
-end
-
-function Disc:disableTorqueCrank()
-    print("disableTorqueCrank")
 end
 
 function Disc:toggleControl()
@@ -154,11 +144,19 @@ function Disc:setEdgeFriction(frictionCoeff)
     end
 end
 
+function Disc:applyTorque(t)
+    if tonumber(t) ~= nil then
+        local currentTorque = self._body:getTorque()
+        self._body:setTorque(t + currentTorque)
+    end
+end
+
 function Disc:__gc()
-    print("destroying disc")
+    print("destroying disc to dubious effect")
     self:removeDragConstraints()
     self:disablePositionCrank()
     self:disableTorqueCrank()
+    World.space:removeShape(self._shape) --FIXME: Circle:_gc() is not getting called?!
     World.space:removeBody(self._body)
     Disc.super.__gc(self)
 end

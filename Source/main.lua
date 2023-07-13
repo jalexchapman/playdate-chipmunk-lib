@@ -26,6 +26,8 @@ SolidPattern = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
 ControllablePattern = {0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55}
 PlacementPattern = {0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55}
 
+TorqueCrankPower = 1000
+
 MaxCrankForce = 80000
 EditorSprite = nil
 
@@ -226,19 +228,46 @@ local function updateFrictionAndDragValues()
     end
 end
 
+local function updateTorqueCrankSettings()
+    local forceChanged = false
+    if playdate.buttonIsPressed(playdate.kButtonDown)
+    then
+        forceChanged = true
+        TorqueCrankPower *= 0.975
+    end
+    if playdate.buttonIsPressed(playdate.kButtonUp) then 
+        forceChanged = true
+        TorqueCrankPower *= 1.015
+    end
+end
+
+local function drawTorqueCrankSettings(x, y)
+    gfx.drawText(string.format("Torque: %.0f", TorqueCrankPower), x, y)
+end
+
+
 function updateInputs()
     if Settings.inputMode == InputModes.setConstants then
         updatePhysConstants()
     elseif Settings.inputMode == InputModes.positionCrank then
+        if not playdate.isCrankDocked() then
+            CrankAngle = playdate.getCrankPosition()
+        end
         updatePositionCrankSettings()
+    elseif Settings.inputMode == InputModes.torqueCrank then
+        if not playdate.isCrankDocked() then
+            local crankRate = playdate.getCrankChange()
+            for _, object in ipairs(DynamicObjects) do -- FIXME: there must be a better home for this
+                if object.isControllable and object.applyTorque ~= nil then
+                    object:applyTorque(crankRate * TorqueCrankPower)
+                end
+            end
+        end
+        updateTorqueCrankSettings()
     end
     if Settings.accelEnabled then
         updateGravity() --FIXME: consider polling accel every physics step? Subtly laggy
     end
-    if not playdate.isCrankDocked() then
-        CrankAngle = playdate.getCrankPosition() or 0
-    end
-
 end
 
 function updateChipmunk(dtSeconds)
@@ -272,6 +301,8 @@ function updateGraphics()
         drawPhysConstants(0,0)
     elseif Settings.inputMode == InputModes.positionCrank then
         drawPositionCrankSettings(0,0)
+    elseif Settings.inputMode == InputModes.torqueCrank then
+        drawTorqueCrankSettings(0,0)
     end
 end
 
