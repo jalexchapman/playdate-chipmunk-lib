@@ -27,6 +27,7 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     self.moment = moment
 
     self.isControllable = false
+    self.isTorqueCrankable = false
 
     if Settings.dragEnabled then
         self:addDragConstraints()
@@ -122,8 +123,9 @@ function Disc:setPositionCrankForce(force)
 end
 
 function Disc:enableTorqueCrank()
+    print("Disc:enableTorqueCrank()")
     if self.isControllable then
-        print("enableTorqueCrank()")
+        self.isTorqueCrankable = true
     end
 end
 
@@ -135,7 +137,18 @@ function Disc:disablePositionCrank()
 end
 
 function Disc:disableTorqueCrank()
-    print("disableTorqueCrank")
+    self.isTorqueCrankable = false
+    print("Disc:disableTorqueCrank")
+end
+
+function Disc:applyTorqueCrank(t)
+    if not self.isTorqueCrankable or not self.isControllable then
+        return
+    end
+    if tonumber(t) ~= nil then
+        local currentTorque = self._body:getTorque()
+        self._body:setTorque(t + currentTorque)
+    end
 end
 
 function Disc:toggleControl()

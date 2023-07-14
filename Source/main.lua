@@ -259,6 +259,13 @@ function updateInputs()
         updatePositionCrankSettings()
     elseif Settings.inputMode == InputModes.torqueCrank then
         updateTorqueCrankSettings()
+        if CrankDelta ~= 0 then
+            for _, item in ipairs(DynamicObjects) do
+                if item.applyTorqueCrank ~= nil then
+                    item:applyTorqueCrank(CrankDelta * TorqueCrankPower)
+                end
+            end
+        end
     end
     if Settings.accelEnabled then
         updateGravity()
