@@ -70,6 +70,7 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     World.space:addBody(self._body)
 
     self.isControllable = false
+    self.isTorqueCrankable = false
 
     if Settings.dragEnabled then
         self:addDragConstraints()
@@ -129,6 +130,29 @@ function Box:disablePositionCrank()
     if self._positionCrankConstraint ~= nil then
         World.space:removeConstraint(self._positionCrankConstraint)
         self._positionCrankConstraint = nil
+    end
+end
+
+
+function Box:enableTorqueCrank()
+    print("Box:enableTorqueCrank()")
+    if self.isControllable then
+        self.isTorqueCrankable = true
+    end
+end
+
+function Box:disableTorqueCrank()
+    self.isTorqueCrankable = false
+    print("Box:disableTorqueCrank")
+end
+
+function Box:applyTorqueCrank(t)
+    if not self.isTorqueCrankable or not self.isControllable then
+        return
+    end
+    if tonumber(t) ~= nil then
+       local currentTorque = self._body:getTorque()
+        self._body:setTorque(t + currentTorque)
     end
 end
 

@@ -95,8 +95,8 @@ end
 
 function Editor:crankSelectMode()
     --crank selects tool
-    if (not playdate.isCrankDocked()) and playdate.getCrankChange() ~= 0 then
-        local deg = playdate.getCrankPosition()
+    if CrankDelta ~= 0 then
+        local deg = CrankAngle
         if deg <= 90 then
             if self.currentMode ~= EditorModes.delete then
                 self:enableMode(EditorModes.delete)
@@ -140,8 +140,10 @@ end
 function Editor:getCursorSpeed()
     if self.cursorMoveDuration < 3 then
         return 1
-    elseif self.cursorMoveDuration < 8 then
+    elseif self.cursorMoveDuration < 4 then
         return 2
+    elseif self.cursorMoveDuration < 7 then
+        return 3
     else
         return 4
     end
