@@ -93,11 +93,13 @@ function Circle.drawStatic(radius, angle, pattern, color, useOutline)
     gfx.fillCircleAtPoint(radius, radius, radius)
     gfx.setPattern(SolidPattern)
     if useOutline then
+        gfx.setLineWidth(1)
         gfx.drawCircleAtPoint(radius, radius, radius)
     end
     local xEdge = -1 * math.sin(angle) * radius
     local yEdge = math.cos(angle) * radius
     gfx.setColor(gfx.kColorWhite)
+    gfx.setLineWidth(1)
     gfx.drawLine(
         radius + xEdge, radius + yEdge,
         radius - xEdge, radius - yEdge)

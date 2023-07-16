@@ -5,10 +5,12 @@ import "circle.lua"
 import "disc.lua"
 import "world.lua"
 import "box.lua"
+import "staticsegment.lua"
 import "settings.lua"
 import "editor.lua"
 
 local gfx = playdate.graphics
+local geom = playdate.geometry
 gfx.setColor(gfx.kColorBlack)
 
 FixedStepMs = 10 --100fps/10ms physics
@@ -39,6 +41,7 @@ local dragCoeff = 0.0015
 
 wallSegments = {} -- fixme: local?
 DynamicObjects = {}
+StaticSegments = {}
 
 
 function updateGravity()
@@ -105,16 +108,15 @@ function setup()
 
 
     wallSegments = {
-        chipmunk.shape.newSegment(World.staticBody,-20,-20,420,-20,20),
-        chipmunk.shape.newSegment(World.staticBody,-20,260,420,260,20),
-        chipmunk.shape.newSegment(World.staticBody,-20,-20,-20,260,20),
-        chipmunk.shape.newSegment(World.staticBody,420,-20,420,260,20)
+        chipmunk.shape.newSegment(World.staticBody,-20,-20,421,-20,20),
+        chipmunk.shape.newSegment(World.staticBody,-20,260,421,261,20),
+        chipmunk.shape.newSegment(World.staticBody,-20,-20,-20,261,20),
+        chipmunk.shape.newSegment(World.staticBody,421,-20,421,261,20)
     }
     
     for _, segment in ipairs(wallSegments) do
         segment:setFriction(0.3)
         segment:setElasticity(0.5)
-        printTable(World.space)
         World.space:addShape(segment)
     end
     --addPegs()
@@ -123,6 +125,9 @@ function setup()
        addRandomBox()
     end
     DynamicObjects[1]:toggleControl()
+    local testBar = StaticSegment(geom.point.new(100, 60), geom.point.new(300, 80), 3, 0.3, 0.5)
+    printTable(testBar:getHitPoly())
+    table.insert(StaticSegments, testBar)
     gfx.setBackgroundColor(gfx.kColorWhite)
     gfx.setColor(gfx.kColorWhite)
     gfx.fillRect(0,0,400,240)

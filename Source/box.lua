@@ -249,6 +249,7 @@ function Box.drawStatic(polygon, pattern, color, useOutline)
     gfx.fillPolygon(polygon)
     gfx.setPattern(SolidPattern)
     if useOutline then
+        gfx.setLineWidth(1)
         gfx.drawPolygon(polygon)
     end
 end
