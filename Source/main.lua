@@ -77,26 +77,6 @@ function addRandomBox()
 
 end
 
-function addPeg(r, x, y)
-    local friction = 0.6
-    local elasticity = 0.7
-    local peg = Circle(World.staticBody, x, y, r, friction, elasticity)
-    print("Adding peg size " .. r .. " at " .. x .."," .. y)
-    return peg
-end
-
-function addPegs()
-    local radius = 3.0
-    for i=80,320,160 do
-        for j =80,160,80 do
-            addPeg(radius, i, j)
-        end
-        for k=40,200,80 do
-            addPeg(radius, i+80, k)
-        end
-    end
-end
-
 function setup()
     playdate.display.setRefreshRate(0) --update has its own frame limiter
     playdate.startAccelerometer() --tilt is on by default
@@ -119,7 +99,6 @@ function setup()
         segment:setElasticity(0.5)
         World.space:addShape(segment)
     end
-    --addPegs()
     for i=1,4 do
        addRandomCircle()
        addRandomBox()

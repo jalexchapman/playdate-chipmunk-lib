@@ -109,6 +109,13 @@ function Circle.drawStatic(radius, angle, pattern, color, useOutline)
     end
 end
 
+function Circle:pointHit(p)
+    local minRadius = 3
+    local squaredHitRadius = math.max(self.radius, minRadius) ^ 2
+    local squaredDist = (p.x - self.x)^2 + (p.y - self.y)^2
+    return squaredDist < squaredHitRadius
+end
+
 function Circle:__gc()
     print("destroying circle")
     World.space:removeShape(self._shape)

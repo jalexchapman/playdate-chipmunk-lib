@@ -41,22 +41,27 @@ function StaticSegment.getBoundingRect(a, b, radius)
     return boundingRect
 end
 
-function StaticSegment:getHitPoly(minRadius)
-    local lN = (self.b-self.a):leftNormal()
-    local hitRadius = math.max(self.radius, minRadius)
-    local offset = lN * hitRadius
-    return geom.polygon.new(
-        self.a + offset,
-        self.b + offset,
-        self.b - offset,
-        self.a - offset)
-end
-
 function StaticSegment:pointHit(p)
     local minRadius = 3
-    -- printTable("pointHit:", p)
-    -- printTable("hitPoly:", self:getHitPoly(minRadius))
-    return self:getHitPoly(minRadius):containsPoint(p)
+    local hitRadius = math.max(self.radius, minRadius)
+    local squaredHitRadius = hitRadius ^ 2
+    --endcap test
+    local hit =
+        p:squaredDistanceToPoint(self.a) <= squaredHitRadius or
+        p:squaredDistanceToPoint(self.b) <= squaredHitRadius
+
+    --inner poly
+    if not hit then
+        local lN = (self.b - self.a):leftNormal()
+        local leftOffset = lN * hitRadius
+        local hitPoly = geom.polygon.new(
+            self.a + leftOffset,
+            self.b + leftOffset,
+            self.b - leftOffset,
+            self.a - leftOffset)
+        hit = hitPoly:containsPoint(p)
+    end
+    return hit
 end
 
 function StaticSegment.drawAbsolute(a, b, radius, pattern, color)

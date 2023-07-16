@@ -293,10 +293,9 @@ end
 function Editor:deleteHere()
     local hotspot = geom.point.new(self.x, self.y)
 
-    --TODO: just pointHit(hotspot) on all static and dynamic objects? pointHit can filter by aabb first.
     local targets = self:overlappingSprites()
     for _, target in ipairs(targets) do
-        if target.pointHit == nil or target:pointHit(hotspot) then
+        if target:pointHit(hotspot) then
             local hit = false
             for i = #DynamicObjects, 1, -1 do
                 if DynamicObjects[i] == target then
@@ -333,7 +332,6 @@ function Editor:stampBox()
 end
 
 function Editor:stampSegment()
-    -- printTable("start", self.segmentStart, "end", self.segmentEnd, "width", self.segmentWidth)
     local newSegment = StaticSegment(self.segmentStart, self.segmentEnd, self.segmentWidth/2, DefaultObjectFriction, DefaultObjectElasticity)
     if newSegment ~= nil then
         table.insert(StaticObjects, newSegment)
@@ -357,9 +355,12 @@ function Editor:endSegment()
 end
 
 function Editor:toggleControlHere()
-    --TODO: consider just using pointHit on DynamicObjects
+    local hotspot = geom.point.new(self.x, self.y)
+
     local targets = self:overlappingSprites()
     for _, target in ipairs(targets) do
-        if target.toggleControl ~= nil then target:toggleControl() end
+        if target:pointHit(hotspot) and target.toggleControl ~= nil then
+            target:toggleControl()
+        end
     end
 end
