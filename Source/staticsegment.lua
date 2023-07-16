@@ -12,8 +12,8 @@ function StaticSegment:init(pointA, pointB, radius, friction, elasticity)
     StaticSegment.super.init(self)
 
     self.radius = radius
-    self.a = pointA
-    self.b = pointB
+    self.a = pointA:copy()
+    self.b = pointB:copy()
 
     --chipmunk properties
     self.friction = friction
@@ -41,8 +41,7 @@ function StaticSegment.getBoundingRect(a, b, radius)
     return boundingRect
 end
 
-function StaticSegment:getHitPoly()
-    local minRadius = 4
+function StaticSegment:getHitPoly(minRadius)
     local lN = (self.b-self.a):leftNormal()
     local hitRadius = math.max(self.radius, minRadius)
     local offset = lN * hitRadius
@@ -54,7 +53,10 @@ function StaticSegment:getHitPoly()
 end
 
 function StaticSegment:pointHit(p)
-    return self:getHitPoly():containsPoint(p)
+    local minRadius = 3
+    -- printTable("pointHit:", p)
+    -- printTable("hitPoly:", self:getHitPoly(minRadius))
+    return self:getHitPoly(minRadius):containsPoint(p)
 end
 
 function StaticSegment.drawAbsolute(a, b, radius, pattern, color)
@@ -76,4 +78,11 @@ function StaticSegment:draw()
     local color = gfx.kColorBlack
     StaticSegment.drawRelative(
         self.a, self.b, self.radius, pattern, color, geom.point.new(self.x, self.y))
+end
+
+function StaticSegment:__gc()
+    print("destroying StaticSegment")
+    World.space:removeShape(self._shape)
+    self:removeSprite()
+    StaticSegment.super.__gc(self)
 end

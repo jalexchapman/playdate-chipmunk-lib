@@ -41,7 +41,7 @@ local dragCoeff = 0.0015
 
 wallSegments = {} -- fixme: local?
 DynamicObjects = {}
-StaticSegments = {}
+StaticObjects = {}
 
 
 function updateGravity()
@@ -125,9 +125,6 @@ function setup()
        addRandomBox()
     end
     DynamicObjects[1]:toggleControl()
-    local testBar = StaticSegment(geom.point.new(100, 60), geom.point.new(300, 80), 3, 0.3, 0.5)
-    printTable(testBar:getHitPoly())
-    table.insert(StaticSegments, testBar)
     gfx.setBackgroundColor(gfx.kColorWhite)
     gfx.setColor(gfx.kColorWhite)
     gfx.fillRect(0,0,400,240)

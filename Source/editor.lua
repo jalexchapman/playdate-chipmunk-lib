@@ -1,7 +1,8 @@
 import "CoreLibs/sprites"
 import "CoreLibs/graphics"
 import "CoreLibs/object"
-import "World"
+import "world.lua"
+import "segmentpreview.lua"
 
 local gfx = playdate.graphics
 local geom = playdate.geometry
@@ -12,14 +13,12 @@ EditorModes = {
     delete = 1,
     toggleControl = 2,
     disc = 3,
-    box = 4
-    -- segment = 5
+    box = 4,
+    segment = 5
 }
 
 local deleteImage = gfx.image.new('sprites/delete')
-printTable(deleteImage)
 local toggleControlImage = gfx.image.new('sprites/crankcursor')
-printTable(toggleControlImage)
 local segmentImage = gfx.image.new('sprites/addSegment')
 
 local minDiscRadius = 4
@@ -28,19 +27,40 @@ local minBoxWidth = 8
 local maxBoxWidth = 398
 local minBoxHeight = 8
 local maxBoxHeight = 238
+local minSegmentWidth = 2
+local maxSegmentWidth = 40
 
 function Editor:init()
+    self.segmentPreviewer = SegmentPreview()
+
     Editor.super.init(self)
     self.currentMode = 0
     self:enableMode(EditorModes.delete)
     self.cursorMoveDuration = 0
     self:moveTo(200,120)
     self.resizing = false
+    self.dragging = false
     self.discRadius = 30
     self.boxWidth = 30
     self.boxHeight = 30
     self:clearInputState()
     self:setZIndex(32767)
+
+    self.segmentWidth = 2
+    self.segmentStart = geom.point.new(0,0)
+    self.segmentEnd = geom.point.new(0,0)
+end
+
+function Editor:addSprite()
+    Editor.super.addSprite(self)
+    if self.currentMode == EditorModes.segment then
+        self.segmentPreviewer:addSprite()
+    end
+end
+
+function Editor:removeSprite()
+    Editor.super.removeSprite(self)
+    self.segmentPreviewer:removeSprite()
 end
 
 function Editor:update()
@@ -61,9 +81,19 @@ function Editor:update()
 
     if self.resizing then
         if self.currentMode == EditorModes.disc then
-            self:resizeDisc(dx)
+            if dy ~= 0 then
+                self:resizeDisc(-dy)
+            else
+                self:resizeDisc(dx)
+            end
         elseif self.currentMode == EditorModes.box then
             self:resizeBox(dx, dy)
+        elseif self.currentMode == EditorModes.segment then
+            if dy ~= 0 then
+                self:resizeLine(-dy)
+            else
+                self:resizeLine(dx)
+            end
         end
     else
         self:moveCursor(dx, dy)
@@ -74,11 +104,17 @@ function Editor:update()
         if self.currentMode == EditorModes.toggleControl then self:toggleControlHere() end
         if self.currentMode == EditorModes.disc then self:stampDisc() end
         if self.currentMode == EditorModes.box then self:stampBox() end
+        if self.currentMode == EditorModes.segment then self:startSegment() end
+    end
+
+    if playdate.buttonJustReleased(playdate.kButtonA) then
+        self:endSegment()
     end
 
     if playdate.buttonJustPressed(playdate.kButtonB) then
         if self.currentMode == EditorModes.disc or
-              self.currentMode == EditorModes.box then
+              self.currentMode == EditorModes.box or
+              self.currentMode == EditorModes.segment then
             self.resizing = true
         end
     end
@@ -91,32 +127,19 @@ end
 function Editor:clearInputState()
     self.cursorMoveDuration = 0
     self.resizing = false
+    self.dragging = false
 end
 
+-- slice the crank arc into #EditorModes segments, centering the first at 0 degrees
 function Editor:crankSelectMode()
     --crank selects tool
     if CrankDelta ~= 0 then
-        local deg = CrankAngle
-        if deg <= 90 then
-            if self.currentMode ~= EditorModes.delete then
-                self:enableMode(EditorModes.delete)
-                self:clearInputState()
-            end
-        elseif deg <= 180 then
-            if self.currentMode ~= EditorModes.toggleControl then
-                self:enableMode(EditorModes.toggleControl)
-                self:clearInputState()
-            end
-        elseif deg <= 270 then
-            if self.currentMode ~= EditorModes.disc then
-                self:enableMode(EditorModes.disc)
-                self:clearInputState()
-            end
-        else
-            if self.currentMode ~= EditorModes.box then
-                self:enableMode(EditorModes.box)
-                self:clearInputState()
-            end
+        local slices = 5 --FIXME: #EditorModes doesn't seem to work? Don't like hardcoding
+        local newMode = math.floor((CrankAngle * slices/360) + 1.5)
+        if newMode > slices then newMode = 1 end
+        if self.currentMode ~= newMode then
+            self:enableMode(newMode)
+            self:clearInputState()
         end
     end
 end
@@ -134,6 +157,9 @@ function Editor:moveCursor(dx, dy)
         elseif self.x > 400 then self:moveTo(400, self.y) end
         if self.y < 1 then self:moveTo(self.x, 1)
         elseif self.y > 240 then self:moveTo(self.x, 240) end
+        if self.currentMode == EditorModes.segment then
+            self:updateSegment()
+        end
     end
 end
 
@@ -176,10 +202,34 @@ function Editor:resizeDisc(dr)
     end
 end
 
+function Editor:resizeLine(dw)
+    if dw ~= 0 then
+        self.segmentWidth += dw
+        if self.segmentWidth < minSegmentWidth then self.segmentWidth = minSegmentWidth
+        elseif self.segmentWidth > maxSegmentWidth then self.segmentWidth = maxSegmentWidth
+        end
+    end
+    self:updateSegment()
+end
+
+function Editor:updateSegment()
+    self.segmentEnd.x = self.x
+    self.segmentEnd.y = self.y
+    if not self.dragging then
+        self.segmentStart.x = self.x
+        self.segmentStart.y = self.y
+    end
+    self.segmentPreviewer.startPoint.x = self.segmentStart.x
+    self.segmentPreviewer.startPoint.y = self.segmentStart.y
+    self.segmentPreviewer.endPoint.x = self.segmentEnd.x
+    self.segmentPreviewer.endPoint.y = self.segmentEnd.y
+    self.segmentPreviewer.radius = self.segmentWidth / 2
+end
+
 function Editor:enableMode(modeNum)
     print("Editor:enableMode(" .. modeNum .. ")")
-    if math.floor(modeNum) ~= modeNum or modeNum > 4 or modeNum < 1 then
-        print("Invalid parameter '" .. modeNum .. "' passed into enableMode. Must be an int from 1 to 4.")
+    if math.floor(modeNum) ~= modeNum or modeNum > 5 or modeNum < 1 then
+        print("Invalid parameter '" .. modeNum .. "' passed into enableMode. Must be an int from 1 to 5.")
         return
     end
     if modeNum == EditorModes.delete then
@@ -187,12 +237,14 @@ function Editor:enableMode(modeNum)
         self:setCenter(0.5,0.5)
         self:setCollideRect(16,16,2,2)
         self:setImage(deleteImage)
+        self.segmentPreviewer:removeSprite()
         self.currentMode = EditorModes.delete
     elseif modeNum == EditorModes.toggleControl then
         self:setSize(32,32)
         self:setCenter(0,0)
         self:setCollideRect(1,1,2,2)
         self:setImage(toggleControlImage)
+        self.segmentPreviewer:removeSprite()
         self.currentMode = EditorModes.toggleControl
     elseif modeNum == EditorModes.disc then
         local breadth = (self.discRadius * 2) + 1
@@ -200,13 +252,25 @@ function Editor:enableMode(modeNum)
         self:setCenter(0.5,0.5)
         self:setSize(breadth, breadth)
         self:setCollideRect(0,0,breadth, breadth)
+        self.segmentPreviewer:removeSprite()
         self.currentMode = EditorModes.disc
     elseif modeNum == EditorModes.box then
         self:setImage(nil)
         self:setCenter(0.5,0.5)
         self:setSize(self.boxWidth, self.boxHeight)
         self:setCollideRect(0,0,self.boxWidth, self.boxHeight)
+        self.segmentPreviewer:removeSprite()
         self.currentMode = EditorModes.box
+    elseif modeNum == EditorModes.segment then
+        self:setSize(32, 32)
+        self:setCenter(0.5, 0.5)
+        self:setCollideRect(16,16,2,2)
+        self:setImage(segmentImage)
+        self:updateSegment()
+        self.segmentPreviewer:addSprite()
+        self.currentMode = EditorModes.segment
+    else
+        print("Not sure what to do with seemingly valid mode " .. modeNum)
     end
 end
 
@@ -227,17 +291,28 @@ function Editor:draw()
 end
 
 function Editor:deleteHere()
+    local hotspot = geom.point.new(self.x, self.y)
+
+    --TODO: just pointHit(hotspot) on all static and dynamic objects? pointHit can filter by aabb first.
     local targets = self:overlappingSprites()
     for _, target in ipairs(targets) do
-        local hit = false
-        for i = #DynamicObjects, 1, -1 do
-            if DynamicObjects[i] == target then
-                hit = true
-                table.remove(DynamicObjects, i) -- shouldn't be dupes, but just to make sure, continue
+        if target.pointHit == nil or target:pointHit(hotspot) then
+            local hit = false
+            for i = #DynamicObjects, 1, -1 do
+                if DynamicObjects[i] == target then
+                    hit = true
+                    table.remove(DynamicObjects, i)
+                end
             end
-        end
-        if hit then
-            target:removeSprite()
+            for i = #StaticObjects, 1, -1 do
+                if StaticObjects[i] == target then
+                    hit = true
+                    table.remove(StaticObjects, i)
+                end
+            end
+            if hit then
+                target:removeSprite()
+            end
         end
     end
 end
@@ -257,7 +332,32 @@ function Editor:stampBox()
     end
 end
 
+function Editor:stampSegment()
+    -- printTable("start", self.segmentStart, "end", self.segmentEnd, "width", self.segmentWidth)
+    local newSegment = StaticSegment(self.segmentStart, self.segmentEnd, self.segmentWidth/2, DefaultObjectFriction, DefaultObjectElasticity)
+    if newSegment ~= nil then
+        table.insert(StaticObjects, newSegment)
+    end
+end
+
+function Editor:startSegment()
+    if self.currentMode == EditorModes.segment then
+        self.dragging = true
+    end
+end
+
+function Editor:endSegment()
+    if self.dragging then
+        self.dragging = false
+        if self.currentMode == EditorModes.segment then
+            self:stampSegment()
+            self:updateSegment()
+        end
+    end
+end
+
 function Editor:toggleControlHere()
+    --TODO: consider just using pointHit on DynamicObjects
     local targets = self:overlappingSprites()
     for _, target in ipairs(targets) do
         if target.toggleControl ~= nil then target:toggleControl() end
