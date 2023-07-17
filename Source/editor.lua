@@ -311,6 +311,9 @@ function Editor:deleteHere()
             end
             if hit then
                 target:removeSprite()
+                if target.removeDragConstraints ~= nil then --FIXME: duplicate to keep __gc from crashing on removeDragConstraints
+                    target:removeDragConstraints()
+                end
             end
         end
     end
