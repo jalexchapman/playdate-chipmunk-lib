@@ -3,7 +3,7 @@ World.space = nil
 World.staticBody = nil
 World.minGravity = 0
 World.maxGravity = 66778 -- 9.8 m/s^2 at 173ppi (6811 px/m)
-World.gravityMagnitude = 33289 -- feels a bit more comfortable
+World.gravityMagnitude = 16000 -- feels a bit more comfortable
 
 
 function World:setup()

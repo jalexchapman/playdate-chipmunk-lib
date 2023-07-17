@@ -5,10 +5,12 @@ import "circle.lua"
 import "disc.lua"
 import "world.lua"
 import "box.lua"
+import "staticsegment.lua"
 import "settings.lua"
 import "editor.lua"
 
 local gfx = playdate.graphics
+local geom = playdate.geometry
 gfx.setColor(gfx.kColorBlack)
 
 FixedStepMs = 10 --100fps/10ms physics
@@ -39,6 +41,7 @@ local dragCoeff = 0.0015
 
 wallSegments = {} -- fixme: local?
 DynamicObjects = {}
+StaticObjects = {}
 
 
 function updateGravity()
@@ -74,26 +77,6 @@ function addRandomBox()
 
 end
 
-function addPeg(r, x, y)
-    local friction = 0.6
-    local elasticity = 0.7
-    local peg = Circle(World.staticBody, x, y, r, friction, elasticity)
-    print("Adding peg size " .. r .. " at " .. x .."," .. y)
-    return peg
-end
-
-function addPegs()
-    local radius = 3.0
-    for i=80,320,160 do
-        for j =80,160,80 do
-            addPeg(radius, i, j)
-        end
-        for k=40,200,80 do
-            addPeg(radius, i+80, k)
-        end
-    end
-end
-
 function setup()
     playdate.display.setRefreshRate(0) --update has its own frame limiter
     playdate.startAccelerometer() --tilt is on by default
@@ -105,19 +88,17 @@ function setup()
 
 
     wallSegments = {
-        chipmunk.shape.newSegment(World.staticBody,-20,-20,420,-20,20),
-        chipmunk.shape.newSegment(World.staticBody,-20,260,420,260,20),
-        chipmunk.shape.newSegment(World.staticBody,-20,-20,-20,260,20),
-        chipmunk.shape.newSegment(World.staticBody,420,-20,420,260,20)
+        chipmunk.shape.newSegment(World.staticBody,-20,-20,421,-20,20),
+        chipmunk.shape.newSegment(World.staticBody,-20,260,421,261,20),
+        chipmunk.shape.newSegment(World.staticBody,-20,-20,-20,261,20),
+        chipmunk.shape.newSegment(World.staticBody,421,-20,421,261,20)
     }
     
     for _, segment in ipairs(wallSegments) do
         segment:setFriction(0.3)
         segment:setElasticity(0.5)
-        printTable(World.space)
         World.space:addShape(segment)
     end
-    --addPegs()
     for i=1,4 do
        addRandomCircle()
        addRandomBox()

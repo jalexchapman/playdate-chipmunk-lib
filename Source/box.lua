@@ -233,6 +233,12 @@ function Box:updateDrag()
     end
 end
 
+function Box:pointHit(p)
+    local leftX, topY = self:getBounds()
+    local relativeP = p:offsetBy(-leftX, -topY)
+    return self.polygon:containsPoint(relativeP)
+end
+
 function Box:draw()
     local pattern = SolidPattern
     local outline = false
@@ -249,6 +255,7 @@ function Box.drawStatic(polygon, pattern, color, useOutline)
     gfx.fillPolygon(polygon)
     gfx.setPattern(SolidPattern)
     if useOutline then
+        gfx.setLineWidth(1)
         gfx.drawPolygon(polygon)
     end
 end

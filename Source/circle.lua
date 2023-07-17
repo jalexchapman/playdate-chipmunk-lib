@@ -93,11 +93,13 @@ function Circle.drawStatic(radius, angle, pattern, color, useOutline)
     gfx.fillCircleAtPoint(radius, radius, radius)
     gfx.setPattern(SolidPattern)
     if useOutline then
+        gfx.setLineWidth(1)
         gfx.drawCircleAtPoint(radius, radius, radius)
     end
     local xEdge = -1 * math.sin(angle) * radius
     local yEdge = math.cos(angle) * radius
     gfx.setColor(gfx.kColorWhite)
+    gfx.setLineWidth(1)
     gfx.drawLine(
         radius + xEdge, radius + yEdge,
         radius - xEdge, radius - yEdge)
@@ -105,6 +107,13 @@ function Circle.drawStatic(radius, angle, pattern, color, useOutline)
         gfx.setColor(color)
         gfx.drawCircleAtPoint(radius, radius, radius)
     end
+end
+
+function Circle:pointHit(p)
+    local minRadius = 3
+    local squaredHitRadius = math.max(self.radius, minRadius) ^ 2
+    local squaredDist = (p.x - self.x)^2 + (p.y - self.y)^2
+    return squaredDist < squaredHitRadius
 end
 
 function Circle:__gc()
