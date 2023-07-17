@@ -217,15 +217,6 @@ local function drawTorqueCrankSettings(x, y)
     gfx.drawText(string.format("Torque: %.0f", TorqueCrankPower), x, y)
 end
 
-local function updateFrictionAndDragValues()
-    if Settings.dragEnabled then
-        for _, item in ipairs(DynamicObjects) do
-            --printTable(item)
-            item:updateDrag()
-        end
-    end
-end
-
 function updateInputs()
     if not playdate.isCrankDocked() then
         CrankDelta = playdate.getCrankChange()
@@ -255,7 +246,6 @@ end
 
 function updateChipmunk(dtSeconds)
     if Settings.inputMode ~= InputModes.editObjects then -- pause simulation in editor
-        updateFrictionAndDragValues()
         World.space:step(dtSeconds)
     end
 end
