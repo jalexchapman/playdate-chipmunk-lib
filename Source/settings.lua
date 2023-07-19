@@ -89,12 +89,15 @@ function Settings.menuSetup()
         end
     end)
     menu:addCheckmarkMenuItem("drag", false, function(value)
-        Settings.dragEnabled = value --FIXME: add and remove drag constraint
+        Settings.linearDragEnabled = value
+        Settings.rotaryDragEnabled = value
         for _, item in ipairs(DynamicObjects) do
             if value then
-                item:addDragConstraints()
+                item:addLinearDragConstraint()
+                item:addRotaryDragConstraint()
             else
-                item:removeDragConstraints()
+                item:removeLinearDragConstraint()
+                item:removeRotaryDragConstraint()
             end
         end
     end)

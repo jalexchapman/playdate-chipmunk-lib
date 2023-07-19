@@ -72,8 +72,11 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     self.isControllable = false
     self.isTorqueCrankable = false
 
-    if Settings.dragEnabled then
-        self:addDragConstraints()
+    if Settings.linearDragEnabled then
+        self:addLinearDragConstraint()
+    end
+    if Settings.rotaryDragEnabled then
+        self:addRotaryDragConstraint()
     end
     if Settings.inputMode == InputModes.positionCrank then
         self:enablePositionCrank()
@@ -81,7 +84,7 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     self:addSprite()
 end
 
-function Box:addDragConstraints()
+function Box:addLinearDragConstraint()
     if not self._linearDragConstraint then
         local linearDragConstraint = chipmunk.constraint.newPivotJoint(self._body, World.staticBody, 0, 0, 0, 0)
         if linearDragConstraint ~= nil then
@@ -91,6 +94,9 @@ function Box:addDragConstraints()
         end
         self._linearDragConstraint = linearDragConstraint
     end
+end
+
+function Box:addRotaryDragConstraint()
     if not self._rotDragConstraint then
         local rotDragConstraint = chipmunk.constraint.newGearJoint(self._body, World.staticBody, 0, 1)
         if rotDragConstraint ~= nil then
@@ -102,10 +108,13 @@ function Box:addDragConstraints()
     end
 end
 
-function Box:removeDragConstraints()
+function Box:removeLinearDragConstraint()
     if self._linearDragConstraint then World.space:removeConstraint(self._linearDragConstraint) end
-    if self._rotDragConstraint then World.space:removeConstraint(self._rotDragConstraint) end
     self._linearDragConstraint = nil
+end
+
+function Box:removeRotaryDragConstraint()
+    if self._rotDragConstraint then World.space:removeConstraint(self._rotDragConstraint) end
     self._rotDragConstraint = nil
 end
 
@@ -133,9 +142,7 @@ function Box:disablePositionCrank()
     end
 end
 
-
 function Box:enableTorqueCrank()
-    print("Box:enableTorqueCrank()")
     if self.isControllable then
         self.isTorqueCrankable = true
     end
@@ -143,7 +150,6 @@ end
 
 function Box:disableTorqueCrank()
     self.isTorqueCrankable = false
-    print("Box:disableTorqueCrank")
 end
 
 function Box:applyTorqueCrank(t)
@@ -205,26 +211,27 @@ function Box:updateDrag()
         local drag = 0
         local friction = 0
         local crossSection = (self.startingWidth + self.startingHeight) / 2 --fixme: width at rotation - velocity
-        --local vx, vy = self._body:getVelocity()
-        --local w = self._body:getAngularVelocity()
-        --viscous drag = dragCoeff * frontal area * v^2; 
-        --drag = self.dragCoeff * 2 * crossSection * (vx*vx + vy*vy)
+        local vx, vy = self._body:getVelocity()
+        local w = self._body:getAngularVelocity()
+        -- viscous drag = dragCoeff * frontal area * v^2; 
+        drag = self.dragCoeff * 2 * crossSection * (vx*vx + vy*vy)
         local frictionCoeff = self.stiction
-        --if (vx ~=0 or vy ~= 0 or w ~= 0) then
-        --    frictionCoeff = self.sliction
-        --end
-        --Coulomb drag = coefficient of friction * normal force
+        if (vx ~=0 or vy ~= 0 or w ~= 0) then
+           frictionCoeff = self.sliction
+        end
+        -- Coulomb drag = coefficient of friction * normal force
         friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
+        --print("friction: " .. friction .. "  drag: " .. drag)
         self._linearDragConstraint:setMaxForce(drag + friction)
     end
     if self._rotDragConstraint ~= nil then
         local frictionCoeff = self.stiction
-        --local vx, vy = self._body:getVelocity()
-        --local w = self._body:getAngularVelocity()
+        local vx, vy = self._body:getVelocity()
+        local w = self._body:getAngularVelocity()
         local avgRadius = (self.startingWidth + self.startingHeight) / 2
-        --if (vx ~=0 or vy ~= 0 or w ~= 0) then
-        --    frictionCoeff = self.sliction
-        --end
+        if (vx ~=0 or vy ~= 0 or w ~= 0) then
+           frictionCoeff = self.sliction
+        end
         local friction = 0
         -- FIXME: circle is  2/3 coefficient of friction * normal force * radius
         friction = 0.6667 * frictionCoeff * math.abs(World.gravity.z) * self.mass * avgRadius
@@ -263,7 +270,8 @@ end
 function Box:__gc()
     print("destroying box")
     self:disablePositionCrank()
-    self:removeDragConstraints()
+    self:removeLinearDragConstraint()
+    self:removeRotaryDragConstraint()
     World.space:removeShape(self._shape)
     World.space:removeBody(self._body)
     self:removeSprite()

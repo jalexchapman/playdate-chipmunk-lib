@@ -218,7 +218,7 @@ local function drawTorqueCrankSettings(x, y)
 end
 
 local function updateFrictionAndDragValues()
-    if Settings.dragEnabled then
+    if Settings.linearDragEnabled or Settings.rotaryDragEnabled then
         for _, item in ipairs(DynamicObjects) do
             --printTable(item)
             item:updateDrag()
