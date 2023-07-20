@@ -8,7 +8,9 @@ InputModes = {
 }
 
 Settings = {
-    dragEnabled = false,
+    linearDragEnabled = false,
+    rotaryDragEnabled = false,
+    dampedSpringsEnabled = false,
     accelEnabled = true,
     inputMode = InputModes.setConstants
 }
@@ -88,16 +90,38 @@ function Settings.menuSetup()
             playdate.startAccelerometer()
         end
     end)
-    menu:addCheckmarkMenuItem("drag", false, function(value)
-        Settings.linearDragEnabled = value
-        Settings.rotaryDragEnabled = value
+    menu:addOptionsMenuItem("damp", {"off", "lin", "rot", "both", "spring"}, "off",
+    function(value)
+        if value == "lin" or value == "both" then
+            Settings.linearDragEnabled = true
+        else
+            Settings.linearDragEnabled = false
+        end
+        if value == "rot" or value == "both" then
+            Settings.rotaryDragEnabled = true
+        else
+            Settings.rotaryDragEnabled = false
+        end
+        if value == "spring" then
+            Settings.dampedSpringsEnabled = true
+        else
+            Settings.dampedSpringsEnabled = false
+        end
         for _, item in ipairs(DynamicObjects) do
-            if value then
+            if Settings.linearDragEnabled then
                 item:addLinearDragConstraint()
-                item:addRotaryDragConstraint()
             else
                 item:removeLinearDragConstraint()
+            end
+            if Settings.rotaryDragEnabled then
+                item:addRotaryDragConstraint()
+            else
                 item:removeRotaryDragConstraint()
+            end
+            if Settings.dampedSpringsEnabled then
+                item:addDampedSpringConstraint()
+            else
+                item:removeDampedSpringConstraint()
             end
         end
     end)

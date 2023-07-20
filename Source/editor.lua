@@ -317,6 +317,9 @@ function Editor:deleteHere()
                 if target.removeRotaryDragConstraint ~= nil then
                     target:removeRotaryDragConstraint()
                 end
+                if target.removeDampedSpringConstraint ~= nil then
+                    target:removeDampedSpringConstraint()
+                end
             end
         end
     end

@@ -67,6 +67,24 @@ function Disc:addRotaryDragConstraint()
     end
 end
 
+function Disc:addDampedSpringConstraint()
+    local restLength = 15
+    local stiffness = 100
+    local damping = 25
+    local x, y = self._body:getPosition()
+    local springConstraint = chipmunk.constraint.newDampedSpring(
+        self._body, World.staticBody,
+        0, 0, x, y,
+        restLength,
+        stiffness,
+        damping
+    )
+    if springConstraint ~= nil then
+        World.space:addConstraint(springConstraint)
+        self._dampedSpringConstraint = springConstraint
+    end
+end
+
 function Disc:removeLinearDragConstraint()
     if self._linearDragConstraint then 
         World.space:removeConstraint(self._linearDragConstraint)
@@ -79,6 +97,11 @@ function Disc:removeRotaryDragConstraint()
         World.space:removeConstraint(self._rotDragConstraint)
         self._rotDragConstraint = nil
     end
+end
+
+function Disc:removeDampedSpringConstraint()
+    if self._dampedSpringConstraint then World.space:removeConstraint(self._dampedSpringConstraint) end
+    self._dampedSpringConstraint = nil
 end
 
 
@@ -178,6 +201,7 @@ function Disc:__gc()
     print("destroying disc")
     self:removeLinearDragConstraint()
     self:removeRotaryDragConstraint()
+    self:removeDampedSpringConstraint()
     self:disablePositionCrank()
     self:disableTorqueCrank()
     World.space:removeBody(self._body)
