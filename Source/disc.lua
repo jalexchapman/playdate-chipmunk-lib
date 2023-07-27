@@ -107,33 +107,28 @@ end
 
 -- update linear fluid drag and linear friction against the floor play surface
 function Disc:updateDrag()
-    if (self._linearDragConstraint ~= nil) then
+    if self._linearDragConstraint ~= nil or self._rotDragConstraint ~= nil then
+        local vx, vy = self._body:getVelocity()
+        local w = self._body:getAngularVelocity()
         local drag = 0
         local friction = 0
-        local vx, vy = self._body:getVelocity()
-        local w = self._body:getAngularVelocity()
-        --viscous drag = dragCoeff * frontal area * v^2; 
-        drag = self.dragCoeff * 2 * self.radius * (vx*vx + vy*vy)
         local frictionCoeff = self.stiction
-        if (vx ~=0 or vy ~= 0 or w ~= 0) then
-           frictionCoeff = self.sliction
-        end
-        --Coulomb drag = coefficient of friction * normal force
-        friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
-        self._linearDragConstraint:setMaxForce(drag + friction)
-    end
-    if self._rotDragConstraint ~= nil then
-        local frictionCoeff = self.stiction
-        local vx, vy = self._body:getVelocity()
-        local w = self._body:getAngularVelocity()
         if (vx ~=0 or vy ~= 0 or w ~= 0) then
             frictionCoeff = self.sliction
         end
-        local friction = 0
-        -- Torque = 2/3 coefficient of friction * normal force * radius
-        friction = 0.6667 * frictionCoeff * math.abs(World.gravity.z) * self.mass * self.radius
-        self._rotDragConstraint:setMaxForce(friction)
-        --TODO: viscous drag?
+        if (self._linearDragConstraint ~= nil) then
+            --viscous drag = dragCoeff * frontal area * v^2; 
+            drag = self.dragCoeff * 2 * self.radius * (vx*vx + vy*vy)
+            --Coulomb drag = coefficient of friction * normal force
+            friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
+            self._linearDragConstraint:setMaxForce(drag + friction)
+        end
+        if self._rotDragConstraint ~= nil then
+            -- Torque = 2/3 coefficient of friction * normal force * radius
+            friction = 0.6667 * frictionCoeff * math.abs(World.gravity.z) * self.mass * self.radius
+            self._rotDragConstraint:setMaxForce(friction)
+            --TODO: viscous drag?
+        end
     end
 end
 

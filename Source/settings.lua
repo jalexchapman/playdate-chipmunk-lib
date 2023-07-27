@@ -59,7 +59,7 @@ end
 
 function Settings.menuSetup()
     local menu = playdate.getSystemMenu()
-    menu:addOptionsMenuItem("mode", {"const", "edit", "crank1", "crank2"}, "const", 
+    menu:addOptionsMenuItem("mode", {"constants", "edit", "pos crank", "tq. crank"}, "constants", 
     function(value)
         if Settings.inputMode == InputModes.positionCrank then
             Settings.disablePositionCrank()
@@ -68,15 +68,15 @@ function Settings.menuSetup()
         elseif Settings.inputMode == InputModes.editObjects then
             Settings.disableEditor()
         end
-        if value == "const" then
+        if value == "constants" then
             Settings.inputMode = InputModes.setConstants
         elseif value == "edit" then
             Settings.inputMode = InputModes.editObjects
             Settings.enableEditor()
-        elseif value == "crank1" then
+        elseif value == "pos crank" then
             Settings.inputMode = InputModes.positionCrank
             Settings.enablePositionCrank()
-        elseif value == "crank2" then
+        elseif value == "tq. crank" then
             Settings.inputMode = InputModes.torqueCrank
             Settings.enableTorqueCrank()
         end
@@ -90,14 +90,14 @@ function Settings.menuSetup()
             playdate.startAccelerometer()
         end
     end)
-    menu:addOptionsMenuItem("damp", {"off", "lin", "rot", "both", "spring"}, "off",
+    menu:addOptionsMenuItem("friction", {"off", "linear", "rotary", "both", "spring"}, "off",
     function(value)
-        if value == "lin" or value == "both" then
+        if value == "linear" or value == "both" then
             Settings.linearDragEnabled = true
         else
             Settings.linearDragEnabled = false
         end
-        if value == "rot" or value == "both" then
+        if value == "rotary" or value == "both" then
             Settings.rotaryDragEnabled = true
         else
             Settings.rotaryDragEnabled = false

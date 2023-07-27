@@ -231,36 +231,31 @@ function Box:update()
 end
 
 function Box:updateDrag()
-    if (self._linearDragConstraint ~= nil) then
+    if self._linearDragConstraint ~= nil or self._rotDragConstraint ~= nil then
+        local vx, vy = self._body:getVelocity()
+        local w = self._body:getAngularVelocity()
         local drag = 0
         local friction = 0
-        local crossSection = (self.startingWidth + self.startingHeight) / 2 --fixme: width at rotation - velocity
-        local vx, vy = self._body:getVelocity()
-        local w = self._body:getAngularVelocity()
-        -- viscous drag = dragCoeff * frontal area * v^2; 
-        drag = self.dragCoeff * 2 * crossSection * (vx*vx + vy*vy)
         local frictionCoeff = self.stiction
         if (vx ~=0 or vy ~= 0 or w ~= 0) then
-           frictionCoeff = self.sliction
+            frictionCoeff = self.sliction
         end
-        -- Coulomb drag = coefficient of friction * normal force
-        friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
-        --print("friction: " .. friction .. "  drag: " .. drag)
-        self._linearDragConstraint:setMaxForce(drag + friction)
-    end
-    if self._rotDragConstraint ~= nil then
-        local frictionCoeff = self.stiction
-        local vx, vy = self._body:getVelocity()
-        local w = self._body:getAngularVelocity()
-        local avgRadius = (self.startingWidth + self.startingHeight) / 2
-        if (vx ~=0 or vy ~= 0 or w ~= 0) then
-           frictionCoeff = self.sliction
+        if (self._linearDragConstraint ~= nil) then
+            local crossSection = (self.startingWidth + self.startingHeight) / 2 --fixme: width at rotation - velocity
+            -- viscous drag = dragCoeff * frontal area * v^2; 
+            drag = self.dragCoeff * 2 * crossSection * (vx*vx + vy*vy)
+            -- Coulomb drag = coefficient of friction * normal force
+            friction = frictionCoeff * math.abs(World.gravity.z) * self.mass --abs: assuming same friction on screen front/back surfaces
+            --print("friction: " .. friction .. "  drag: " .. drag)
+            self._linearDragConstraint:setMaxForce(drag + friction)
         end
-        local friction = 0
-        -- FIXME: circle is  2/3 coefficient of friction * normal force * radius
-        friction = 0.6667 * frictionCoeff * math.abs(World.gravity.z) * self.mass * avgRadius
-        self._rotDragConstraint:setMaxForce(friction)
-        --TODO: viscous drag?
+        if self._rotDragConstraint ~= nil then
+            local avgRadius = (self.startingWidth + self.startingHeight) / 2
+            -- FIXME: circle is  2/3 coefficient of friction * normal force * radius
+            friction = 0.6667 * frictionCoeff * math.abs(World.gravity.z) * self.mass * avgRadius
+            self._rotDragConstraint:setMaxForce(friction)
+            --TODO: viscous drag?
+        end
     end
 end
 
