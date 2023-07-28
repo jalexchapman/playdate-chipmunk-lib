@@ -256,7 +256,9 @@ end
 
 function updateChipmunk(dtSeconds)
     if Settings.inputMode ~= InputModes.editObjects then -- pause simulation in editor
-        updateFrictionAndDragValues()
+        if Settings.updateDragEveryChipmunkStep then
+            updateFrictionAndDragValues()
+        end
         World.space:step(dtSeconds)
     end
 end
@@ -321,6 +323,9 @@ function fixedRefresh() --derived from https://gafferongames.com/post/fix_your_t
 
     for i=1, steps do
         updateChipmunk(fixedStepSec)
+    end
+    if not Settings.updateDragEveryChipmunkStep then
+        updateFrictionAndDragValues()
     end
 
     updateGraphics()
