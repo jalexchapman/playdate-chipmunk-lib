@@ -222,7 +222,7 @@ local function updateFrictionAndDragValues()
     if Settings.linearDragEnabled or Settings.rotaryDragEnabled then
         for _, item in ipairs(DynamicObjects) do
             --printTable(item)
-            item:updateDrag()
+            item:updateDrag(Settings.useSpriteDataForDrag)
         end
     end
 end
