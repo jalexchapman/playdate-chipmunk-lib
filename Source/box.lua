@@ -230,18 +230,10 @@ function Box:update()
     end
 end
 
-function Box:updateDrag(useSpriteVelocity)
+function Box:updateDrag()
     if self._linearDragConstraint ~= nil or self._rotDragConstraint ~= nil then
-        local vx, vy, w = 0, 0, 0
-        if useSpriteVelocity then
-            local lastFrameSecs = LastFrameTime/1000
-            vx = (self.x - self.prevX) / lastFrameSecs
-            vy = (self.y - self.prevY) / lastFrameSecs
-            w = (self.angle - self.prevAngle) / lastFrameSecs
-        else
-            vx, vy = self._body:getVelocity()
-            w = self._body:getAngularVelocity()
-        end
+        local vx, vy = self._body:getVelocity()
+        local w = self._body:getAngularVelocity()
         local drag = 0
         local friction = 0
         local frictionCoeff = self.stiction

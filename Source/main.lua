@@ -222,7 +222,7 @@ local function updateFrictionAndDragValues()
     if Settings.linearDragEnabled or Settings.rotaryDragEnabled then
         for _, item in ipairs(DynamicObjects) do
             --printTable(item)
-            item:updateDrag(Settings.useSpriteDataForDrag)
+            item:updateDrag()
         end
     end
 end
@@ -324,7 +324,8 @@ function fixedRefresh() --derived from https://gafferongames.com/post/fix_your_t
     for i=1, steps do
         updateChipmunk(fixedStepSec)
     end
-    if not Settings.updateDragEveryChipmunkStep then
+ 
+    if not Settings.updateDragEveryChipmunkStep and Settings.inputMode ~= InputModes.editObjects then
         updateFrictionAndDragValues()
     end
 

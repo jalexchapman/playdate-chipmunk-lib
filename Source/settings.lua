@@ -11,7 +11,6 @@ Settings = {
     linearDragEnabled = false,
     rotaryDragEnabled = false,
     updateDragEveryChipmunkStep = true,
-    useSpriteDataForDrag = false,
     dampedSpringsEnabled = false,
     accelEnabled = true,
     inputMode = InputModes.setConstants
@@ -92,27 +91,22 @@ function Settings.menuSetup()
             playdate.startAccelerometer()
         end
     end)
-    menu:addOptionsMenuItem("friction", {"off", "linear", "rotary", "both", "both3", "spring"}, "off",
+    menu:addOptionsMenuItem("friction", {"off", "linear", "rotary", "both", "both2", "spring"}, "off",
     function(value)
-        if value == "linear" or value == "both" or value == "both2" or value == "both3" then
+        if value == "linear" or value == "both" or value == "both2" then
             Settings.linearDragEnabled = true
         else
             Settings.linearDragEnabled = false
         end
-        if value == "rotary" or value == "both" or value == "both2" or value == "both3" then
+        if value == "rotary" or value == "both" or value == "both2" then
             Settings.rotaryDragEnabled = true
         else
             Settings.rotaryDragEnabled = false
         end
-        if value == "both2" or value == "both3" then
+        if value == "both2"  then
             Settings.updateDragEveryChipmunkStep = false
         else
             Settings.updateDragEveryChipmunkStep = true
-        end
-        if value == "both3" then
-            Settings.useSpriteDataForDrag = false
-        else
-            Settings.useSpriteDataForDrag = true
         end
         if value == "spring" then
             Settings.dampedSpringsEnabled = true
