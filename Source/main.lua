@@ -17,6 +17,7 @@ FixedStepMs = 10 --100fps/10ms physics
 StepAccumulator = 0
 MaxStepsPerFrame = 7 --allow slowdown if it frame time is over 70ms - 15fps may be tolerable
 LastUpdate = 0
+LastFrameTime = 20
 DynamicObjects = {}
 CrankAngle = 0
 CrankDelta = 0
@@ -218,7 +219,7 @@ local function drawTorqueCrankSettings(x, y)
 end
 
 local function updateFrictionAndDragValues()
-    if Settings.dragEnabled then
+    if Settings.linearDragEnabled or Settings.rotaryDragEnabled then
         for _, item in ipairs(DynamicObjects) do
             --printTable(item)
             item:updateDrag()
@@ -255,7 +256,9 @@ end
 
 function updateChipmunk(dtSeconds)
     if Settings.inputMode ~= InputModes.editObjects then -- pause simulation in editor
-        updateFrictionAndDragValues()
+        if Settings.updateDragEveryChipmunkStep then
+            updateFrictionAndDragValues()
+        end
         World.space:step(dtSeconds)
     end
 end
@@ -301,8 +304,8 @@ function fixedRefresh() --derived from https://gafferongames.com/post/fix_your_t
     local now = playdate.getCurrentTimeMilliseconds()
     updateInputs()
 
-    local frameTime = now - LastUpdate
-    StepAccumulator += frameTime
+    LastFrameTime = now - LastUpdate
+    StepAccumulator += LastFrameTime
     LastUpdate = now
     
     local fixedStepSec = FixedStepMs / 1000
@@ -320,6 +323,10 @@ function fixedRefresh() --derived from https://gafferongames.com/post/fix_your_t
 
     for i=1, steps do
         updateChipmunk(fixedStepSec)
+    end
+ 
+    if not Settings.updateDragEveryChipmunkStep and Settings.inputMode ~= InputModes.editObjects then
+        updateFrictionAndDragValues()
     end
 
     updateGraphics()
