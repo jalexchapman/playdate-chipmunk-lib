@@ -2,29 +2,51 @@ import "CoreLibs/sprites"
 import "CoreLibs/graphics"
 import "CoreLibs/object"
 import "World"
-import "Circle.lua"
 
 local gfx = playdate.graphics
 
-class('Disc').extends("Circle")
+class('Disc').extends(gfx.sprite)
 
 function Disc:init(x, y, radius, density, friction, elasticity)
-    
-    local mass = math.pi * radius^2 * density
-    local moment = chipmunk.momentForCircle(mass, radius, 0, 0, 0)
-    local body = chipmunk.body.newDynamic(mass, moment)
-
-    body:setPosition(x, y)
-
-    Disc.super.init(self, body, 0, 0, radius, friction, elasticity)
-    World.space:addBody(self._body)
+    Disc.super.init(self)
 
     self.dragCoeff = .0015
     self.stiction = 0.3
     self.sliction = 0.25
 
+    local mass = math.pi * radius^2 * density
+    local moment = chipmunk.momentForCircle(mass, radius, 0, 0, 0)
+    local body = chipmunk.body.newDynamic(mass, moment)
+    body:setPosition(x, y)
+
+    self.angle = 0
+    self.radius = radius
+    self.density = density
+    self.friction = friction
+    self.elasticity = elasticity
+    self._body = body
     self.mass = mass
     self.moment = moment
+
+    self.prevX = x
+    self.prevY = y
+    self.prevAngle = self.angle
+
+    self._shape = chipmunk.shape.newCircle(self._body, radius, 0, 0)
+    self._shape:setFriction(friction)
+    self._shape:setElasticity(elasticity)
+
+    --gfx.sprite stuff
+    local diameter=  radius * 2 + 1
+    self:setSize(diameter, diameter)
+    self:setCenter(0.5, 0.5)
+    self:setCollideRect(0, 0, diameter, diameter)
+    self:moveTo(x, y)
+
+    self.alpha = 1.0
+
+    World.space:addBody(self._body)
+    World.space:addShape(self._shape)
 
     self.isControllable = false
     self.isTorqueCrankable = false
@@ -40,8 +62,68 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     elseif Settings.inputMode == InputModes.positionCrank then
         self:enablePositionCrank()
     end
+    self:addSprite()
 end
 
+function Disc:update()
+    local a = self._body:getAngle()
+    local x, y = self._body:getPosition()
+
+    self.prevX = self.x
+    self.prevY = self.y
+    self.prevAngle = self.angle
+
+    --round to nearest int to avoid redrawing subpixel moves
+    a = math.floor(a * 100 + 0.5)/100 --pesky radians
+    x = math.floor(x + 0.5)
+    y = math.floor(y + 0.5)
+    self:moveTo(x,y)
+
+    if (a ~= self.angle) then
+        self.angle = a
+        self:markDirty() -- ensure rotation in place
+    end
+end
+
+function Disc:draw()
+    local pattern = SolidPattern
+    local useOutline = false
+    gfx.setColor(gfx.kColorBlack)
+    if self.isControllable then
+        pattern = ControllablePattern
+        useOutline = true
+    end
+    Disc.drawStatic(self.radius, self.angle, pattern, gfx.kColorBlack, useOutline)
+end
+
+function Disc.drawStatic(radius, angle, pattern, color, useOutline)
+    gfx.setColor(color)
+    gfx.setPattern(pattern)
+    gfx.fillCircleAtPoint(radius, radius, radius)
+    gfx.setPattern(SolidPattern)
+    if useOutline then
+        gfx.setLineWidth(1)
+        gfx.drawCircleAtPoint(radius, radius, radius)
+    end
+    local xEdge = -1 * math.sin(angle) * radius
+    local yEdge = math.cos(angle) * radius
+    gfx.setColor(gfx.kColorWhite)
+    gfx.setLineWidth(1)
+    gfx.drawLine(
+        radius + xEdge, radius + yEdge,
+        radius - xEdge, radius - yEdge)
+    if useOutline then
+        gfx.setColor(color)
+        gfx.drawCircleAtPoint(radius, radius, radius)
+    end
+end
+
+function Disc:pointHit(p)
+    local minRadius = 3
+    local squaredHitRadius = math.max(self.radius, minRadius) ^ 2
+    local squaredDist = (p.x - self.x)^2 + (p.y - self.y)^2
+    return squaredDist < squaredHitRadius
+end
 
 function Disc:addLinearDragConstraint()
     if not self._linearDragConstraint then
@@ -194,11 +276,12 @@ end
 
 function Disc:__gc()
     print("destroying disc")
+    self:disablePositionCrank()
     self:removeLinearDragConstraint()
     self:removeRotaryDragConstraint()
     self:removeDampedSpringConstraint()
-    self:disablePositionCrank()
-    self:disableTorqueCrank()
+    World.space:removeShape(self._shape)
     World.space:removeBody(self._body)
+    self:removeSprite()
     Disc.super.__gc(self)
 end

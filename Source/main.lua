@@ -1,7 +1,6 @@
 import 'CoreLibs/sprites.lua'
 import 'CoreLibs/graphics.lua'
 import 'CoreLibs/object.lua'
-import "circle.lua"
 import "disc.lua"
 import "world.lua"
 import "box.lua"
