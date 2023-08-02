@@ -5,21 +5,28 @@ import "world.lua"
 import "segmentpreview.lua"
 
 local gfx = playdate.graphics
+local snd = playdate.sound
 local geom = playdate.geometry
 
 class('Editor').extends(gfx.sprite)
 
 EditorModes = {
     delete = 1,
-    toggleControl = 2,
-    disc = 3,
-    box = 4,
-    segment = 5
+    inspect = 2,
+    box = 3,
+    disc = 4,
+    segment = 5,
+    toggleControl = 6
 }
 
 local deleteImage = gfx.image.new('sprites/delete')
+local inspectImage = gfx.image.new('sprites/inspector')
 local toggleControlImage = gfx.image.new('sprites/crankcursor')
 local segmentImage = gfx.image.new('sprites/addSegment')
+
+local clickSound = snd.sampleplayer.new('sounds/click')
+local openSound = snd.sampleplayer.new('sounds/open')
+local closeSound = snd.sampleplayer.new('sounds/close')
 
 local minDiscRadius = 4
 local maxDiscRadius = 119
@@ -40,7 +47,7 @@ function Editor:init()
     self:moveTo(200,120)
     self.resizing = false
     self.dragging = false
-    self.discRadius = 30
+    self.discRadius = 15
     self.boxWidth = 30
     self.boxHeight = 30
     self:clearInputState()
@@ -101,6 +108,7 @@ function Editor:update()
 
     if playdate.buttonJustPressed(playdate.kButtonA) then
         if self.currentMode == EditorModes.delete then self:deleteHere() end
+        if self.currentMode == EditorModes.inspect then self:playOpenSound() end
         if self.currentMode == EditorModes.toggleControl then self:toggleControlHere() end
         if self.currentMode == EditorModes.disc then self:stampDisc() end
         if self.currentMode == EditorModes.box then self:stampBox() end
@@ -117,6 +125,7 @@ function Editor:update()
               self.currentMode == EditorModes.segment then
             self.resizing = true
         end
+        if self.currentMode == EditorModes.inspect then self:playCloseSound() end
     end
 
     if playdate.buttonJustReleased(playdate.kButtonB) then
@@ -134,10 +143,11 @@ end
 function Editor:crankSelectMode()
     --crank selects tool
     if CrankDelta ~= 0 then
-        local slices = 5 --FIXME: #EditorModes doesn't seem to work? Don't like hardcoding
+        local slices = 6 --FIXME: #EditorModes doesn't seem to work? Don't like hardcoding
         local newMode = math.floor((CrankAngle * slices/360) + 1.5)
         if newMode > slices then newMode = 1 end
         if self.currentMode ~= newMode then
+            self:playClickSound()
             self:enableMode(newMode)
             self:clearInputState()
         end
@@ -169,9 +179,11 @@ function Editor:getCursorSpeed()
     elseif self.cursorMoveDuration < 4 then
         return 2
     elseif self.cursorMoveDuration < 7 then
-        return 3
-    else
         return 4
+    elseif self.cursorMoveDuration < 10 then
+        return 6
+    else
+        return 8
     end
 end
 
@@ -228,7 +240,7 @@ end
 
 function Editor:enableMode(modeNum)
     print("Editor:enableMode(" .. modeNum .. ")")
-    if math.floor(modeNum) ~= modeNum or modeNum > 5 or modeNum < 1 then
+    if math.floor(modeNum) ~= modeNum or modeNum > 6 or modeNum < 1 then
         print("Invalid parameter '" .. modeNum .. "' passed into enableMode. Must be an int from 1 to 5.")
         return
     end
@@ -239,6 +251,13 @@ function Editor:enableMode(modeNum)
         self:setImage(deleteImage)
         self.segmentPreviewer:removeSprite()
         self.currentMode = EditorModes.delete
+    elseif modeNum == EditorModes.inspect then
+        self:setSize(32,32)
+        self:setCenter(0.344,0.344)
+        self:setCollideRect(10,10,3,3)
+        self:setImage(inspectImage)
+        self.segmentPreviewer:removeSprite()
+        self.currentMode = EditorModes.inspect     
     elseif modeNum == EditorModes.toggleControl then
         self:setSize(32,32)
         self:setCenter(0,0)
@@ -273,6 +292,19 @@ function Editor:enableMode(modeNum)
         print("Not sure what to do with seemingly valid mode " .. modeNum)
     end
 end
+
+function Editor:playClickSound()
+    clickSound:play(1)
+end
+
+function Editor:playOpenSound()
+    openSound:play(1)
+end
+
+function Editor:playCloseSound()
+    closeSound:play(1)
+end
+
 
 function Editor:draw()
     if self.currentMode == EditorModes.disc then
