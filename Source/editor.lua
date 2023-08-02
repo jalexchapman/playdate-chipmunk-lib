@@ -308,7 +308,7 @@ end
 
 function Editor:draw()
     if self.currentMode == EditorModes.disc then
-        Circle.drawStatic(self.discRadius, 0, PlacementPattern, gfx.kColorBlack, false)
+        Disc.drawStatic(self.discRadius, 0, PlacementPattern, gfx.kColorBlack, false)
     elseif self.currentMode == EditorModes.box then
         local tempPoly = geom.polygon.new(
             1, 1,

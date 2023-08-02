@@ -10,6 +10,7 @@ class('Box').extends(gfx.sprite)
 
 function Box:init(x, y, width, height, cornerRadius, density, friction, elasticity)
     Box.super.init(self)
+
     self.dragCoeff = .0015
     self.stiction = 0.3
     self.sliction = 0.25
@@ -20,6 +21,7 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     body:setPosition(x, y)
 
     self.angle = 0
+    self.density = density
     self.friction = friction
     self.elasticity = elasticity
     self.angle = angle
