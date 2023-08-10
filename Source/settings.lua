@@ -12,7 +12,6 @@ Settings = {
     rotaryDragEnabled = false,
     updateDragEveryChipmunkStep = true,
     dampedSpringsEnabled = false,
-    accelEnabled = true,
     inputMode = InputModes.setConstants
 }
 
@@ -83,13 +82,7 @@ function Settings.menuSetup()
         end
     end)
     menu:addCheckmarkMenuItem("tilt", true, function(value)
-        Settings.accelEnabled = value
-        if not value then
-            playdate.stopAccelerometer()
-            World:setGravity(0,1,0)
-        else
-            playdate.startAccelerometer()
-        end
+        World:setTiltEnabled(value)
     end)
     menu:addOptionsMenuItem("friction", {"off", "linear", "rotary", "both", "both2", "spring"}, "off",
     function(value)

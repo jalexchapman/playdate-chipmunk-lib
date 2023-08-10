@@ -46,7 +46,7 @@ StaticObjects = {}
 
 function updateGravity()
     local x, y, z = playdate.readAccelerometer()
-    World:setGravity(x, y, z)
+    World:setAccelVector(x, y, z)
 end
 
 function addRandomCircle()
@@ -114,7 +114,7 @@ end
 local function drawPhysConstants(x, y)
     gfx.drawText(string.format(
         "stic: %.3f slic: %.3f drag: %.5f grav: %.0f",
-        stiction, sliction, dragCoeff, World.gravityMagnitude),x,y)
+        stiction, sliction, dragCoeff, World:getGravityMagnitude()),x,y)
 end
 
 local function updatePhysConstants()
@@ -166,12 +166,7 @@ local function updatePhysConstants()
     then
         local crankAmt = playdate.getCrankChange()
         if crankAmt ~= 0 then
-            World.gravityMagnitude += playdate.getCrankChange() * 10
-            if World.gravityMagnitude > World.maxGravity then World.gravityMagnitude = World.maxGravity end
-            if World.gravityMagnitude < World.minGravity then World.gravityMagnitude = 0 end
-            if not Settings.accelEnabled then
-                World:setGravity(0,1,0) -- refresh gravity vector
-            end
+            World:setGravityMagnitude(World:getGravityMagnitude() + playdate.getCrankChange() * 10)
         end
     end
 end
@@ -248,7 +243,7 @@ function updateInputs()
             end
         end
     end
-    if Settings.accelEnabled then
+    if World:isTiltEnabled() then
         updateGravity()
     end
 end

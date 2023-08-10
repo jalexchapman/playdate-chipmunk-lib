@@ -3,6 +3,7 @@ import "CoreLibs/graphics"
 import "CoreLibs/object"
 import "world.lua"
 import "segmentpreview.lua"
+import "inspector.lua"
 
 local gfx = playdate.graphics
 local snd = playdate.sound
@@ -25,8 +26,6 @@ local toggleControlImage = gfx.image.new('sprites/crankcursor')
 local segmentImage = gfx.image.new('sprites/addSegment')
 
 local clickSound = snd.sampleplayer.new('sounds/click')
-local openSound = snd.sampleplayer.new('sounds/open')
-local closeSound = snd.sampleplayer.new('sounds/close')
 
 local minDiscRadius = 4
 local maxDiscRadius = 119
@@ -39,6 +38,7 @@ local maxSegmentWidth = 40
 
 function Editor:init()
     self.segmentPreviewer = SegmentPreview()
+    self.inspector = Inspector()
 
     Editor.super.init(self)
     self.currentMode = 0
@@ -51,7 +51,7 @@ function Editor:init()
     self.boxWidth = 30
     self.boxHeight = 30
     self:clearInputState()
-    self:setZIndex(32767)
+    self:setZIndex(32765)
 
     self.segmentWidth = 2
     self.segmentStart = geom.point.new(0,0)
@@ -66,8 +66,9 @@ function Editor:addSprite()
 end
 
 function Editor:removeSprite()
-    Editor.super.removeSprite(self)
     self.segmentPreviewer:removeSprite()
+    self:closeInspector()
+    Editor.super.removeSprite(self)
 end
 
 function Editor:update()
@@ -102,13 +103,13 @@ function Editor:update()
                 self:resizeLine(dx)
             end
         end
-    else
+    elseif self.currentMode ~= EditorModes.inspect or not self.inspector.isOpened then
         self:moveCursor(dx, dy)
     end
 
     if playdate.buttonJustPressed(playdate.kButtonA) then
         if self.currentMode == EditorModes.delete then self:deleteHere() end
-        if self.currentMode == EditorModes.inspect then self:playOpenSound() end
+        if self.currentMode == EditorModes.inspect then self:inspectHere() end
         if self.currentMode == EditorModes.toggleControl then self:toggleControlHere() end
         if self.currentMode == EditorModes.disc then self:stampDisc() end
         if self.currentMode == EditorModes.box then self:stampBox() end
@@ -125,7 +126,7 @@ function Editor:update()
               self.currentMode == EditorModes.segment then
             self.resizing = true
         end
-        if self.currentMode == EditorModes.inspect then self:playCloseSound() end
+        if self.currentMode == EditorModes.inspect then self:closeInspector() end
     end
 
     if playdate.buttonJustReleased(playdate.kButtonB) then
@@ -250,6 +251,7 @@ function Editor:enableMode(modeNum)
         self:setCollideRect(16,16,2,2)
         self:setImage(deleteImage)
         self.segmentPreviewer:removeSprite()
+        self:closeInspector()
         self.currentMode = EditorModes.delete
     elseif modeNum == EditorModes.inspect then
         self:setSize(32,32)
@@ -264,6 +266,7 @@ function Editor:enableMode(modeNum)
         self:setCollideRect(1,1,2,2)
         self:setImage(toggleControlImage)
         self.segmentPreviewer:removeSprite()
+        self:closeInspector()
         self.currentMode = EditorModes.toggleControl
     elseif modeNum == EditorModes.disc then
         local breadth = (self.discRadius * 2) + 1
@@ -272,6 +275,7 @@ function Editor:enableMode(modeNum)
         self:setSize(breadth, breadth)
         self:setCollideRect(0,0,breadth, breadth)
         self.segmentPreviewer:removeSprite()
+        self:closeInspector()
         self.currentMode = EditorModes.disc
     elseif modeNum == EditorModes.box then
         self:setImage(nil)
@@ -279,6 +283,7 @@ function Editor:enableMode(modeNum)
         self:setSize(self.boxWidth, self.boxHeight)
         self:setCollideRect(0,0,self.boxWidth, self.boxHeight)
         self.segmentPreviewer:removeSprite()
+        self:closeInspector()
         self.currentMode = EditorModes.box
     elseif modeNum == EditorModes.segment then
         self:setSize(32, 32)
@@ -287,6 +292,7 @@ function Editor:enableMode(modeNum)
         self:setImage(segmentImage)
         self:updateSegment()
         self.segmentPreviewer:addSprite()
+        self:closeInspector()
         self.currentMode = EditorModes.segment
     else
         print("Not sure what to do with seemingly valid mode " .. modeNum)
@@ -296,15 +302,6 @@ end
 function Editor:playClickSound()
     clickSound:play(1)
 end
-
-function Editor:playOpenSound()
-    openSound:play(1)
-end
-
-function Editor:playCloseSound()
-    closeSound:play(1)
-end
-
 
 function Editor:draw()
     if self.currentMode == EditorModes.disc then
@@ -404,4 +401,24 @@ function Editor:toggleControlHere()
             target:toggleControl()
         end
     end
+end
+
+function Editor:inspectHere()
+    local hotspot = geom.point.new(self.x, self.y)
+    local hit = nil
+    for _, target in ipairs(DynamicObjects) do
+        if target:pointHit(hotspot) then
+            hit = target
+        end
+    end
+    if hit then
+        self.inspector:openObject(hit)
+    else
+        self.inspector:openWorld()
+    end
+end
+
+function Editor:closeInspector()
+    self.inspector:dismiss()
+    --FIXME: if nothing else, just cut straight to dismiss
 end
