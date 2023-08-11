@@ -119,7 +119,7 @@ function Disc.drawStatic(radius, angle, pattern, color, useOutline)
 end
 
 function Disc:pointHit(p)
-    local minRadius = 3
+    local minRadius = 4
     local squaredHitRadius = math.max(self.radius, minRadius) ^ 2
     local squaredDist = (p.x - self.x)^2 + (p.y - self.y)^2
     return squaredDist < squaredHitRadius

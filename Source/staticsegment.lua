@@ -42,7 +42,7 @@ function StaticSegment.getBoundingRect(a, b, radius)
 end
 
 function StaticSegment:pointHit(p)
-    local minRadius = 3
+    local minRadius = 4
     local hitRadius = math.max(self.radius, minRadius)
     local squaredHitRadius = hitRadius ^ 2
     --endcap test

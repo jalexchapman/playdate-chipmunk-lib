@@ -81,9 +81,6 @@ function Settings.menuSetup()
             Settings.enableTorqueCrank()
         end
     end)
-    menu:addCheckmarkMenuItem("tilt", true, function(value)
-        World:setTiltEnabled(value)
-    end)
     menu:addOptionsMenuItem("friction", {"off", "linear", "rotary", "both", "both2", "spring"}, "off",
     function(value)
         if value == "linear" or value == "both" or value == "both2" then

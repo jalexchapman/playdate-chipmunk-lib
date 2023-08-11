@@ -41,8 +41,8 @@ function Editor:init()
     self.inspector = Inspector()
 
     Editor.super.init(self)
-    self.currentMode = 0
-    self:enableMode(EditorModes.delete)
+    self.currentMode = Editor.modeForAngle(CrankAngle)
+    self:enableMode(self.currentMode)
     self.cursorMoveDuration = 0
     self:moveTo(200,120)
     self.resizing = false
@@ -59,6 +59,8 @@ function Editor:init()
 end
 
 function Editor:addSprite()
+    self.currentMode = Editor.modeForAngle(CrankAngle)
+    self:enableMode(self.currentMode)
     Editor.super.addSprite(self)
     if self.currentMode == EditorModes.segment then
         self.segmentPreviewer:addSprite()
@@ -145,14 +147,20 @@ function Editor:crankSelectMode()
     --crank selects tool
     if CrankDelta ~= 0 then
         local slices = 6 --FIXME: #EditorModes doesn't seem to work? Don't like hardcoding
-        local newMode = math.floor((CrankAngle * slices/360) + 1.5)
-        if newMode > slices then newMode = 1 end
+        local newMode = Editor.modeForAngle(CrankAngle)
         if self.currentMode ~= newMode then
             self:playClickSound()
             self:enableMode(newMode)
             self:clearInputState()
         end
     end
+end
+
+function Editor.modeForAngle(crankAngle)
+    local slices = 6 --FIXME: #EditorModes doesn't seem to work? Don't like hardcoding
+    local mode = math.floor((CrankAngle * slices/360) + 1.5)
+    if mode > slices then mode = 1 end
+    return mode
 end
 
 function Editor:moveCursor(dx, dy)
@@ -321,10 +329,9 @@ end
 
 function Editor:deleteHere()
     local hotspot = geom.point.new(self.x, self.y)
-
-    local targets = self:overlappingSprites()
-    for _, target in ipairs(targets) do
-        if target:pointHit(hotspot) then
+    local allSprites = playdate.graphics.sprite.getAllSprites()
+    for _, target in ipairs(allSprites) do
+        if target.pointHit ~= nil and target:pointHit(hotspot) then
             local hit = false
             for i = #DynamicObjects, 1, -1 do
                 if DynamicObjects[i] == target then
@@ -395,9 +402,9 @@ end
 function Editor:toggleControlHere()
     local hotspot = geom.point.new(self.x, self.y)
 
-    local targets = self:overlappingSprites()
-    for _, target in ipairs(targets) do
-        if target:pointHit(hotspot) and target.toggleControl ~= nil then
+    local allSprites = playdate.graphics.sprite.getAllSprites()
+    for _, target in ipairs(allSprites) do
+        if target.pointHit ~= nil and target:pointHit(hotspot) and target.toggleControl ~= nil then
             target:toggleControl()
         end
     end
@@ -406,8 +413,9 @@ end
 function Editor:inspectHere()
     local hotspot = geom.point.new(self.x, self.y)
     local hit = nil
-    for _, target in ipairs(DynamicObjects) do
-        if target:pointHit(hotspot) then
+    local allSprites = playdate.graphics.sprite.getAllSprites()
+    for _, target in ipairs(allSprites) do
+        if target.pointHit ~= nil and target:pointHit(hotspot) then
             hit = target
         end
     end
