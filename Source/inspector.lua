@@ -60,6 +60,47 @@ function Inspector:openWorld()
             max = World.maxGravity,
             format = "%.0f"},
 
+            {label = "fluid drag",
+            getter = function() return World.dragCoeff end,
+            setter = function(val)
+                World.dragCoeff = val
+                for _, object in ipairs(DynamicObjects) do
+                    object.dragCoeff = val
+                end
+            end,
+            type = Inspector.dataTypes.number,
+            min = 0,
+            format = "%.5f"
+            },
+
+            {label = "surface k. fric",
+            getter = function() return World.sliction end,
+            setter = function(val)
+                World.sliction = val
+                for _, object in ipairs(DynamicObjects) do
+                    object.sliction = val
+                end
+            end,
+            type = Inspector.dataTypes.number,
+            min = 0,
+            max = 2,
+            format = "%.3f"
+            },
+
+            {label = "surface st. fric",
+            getter = function() return World.stiction end,
+            setter = function(val)
+                World.stiction = val
+                for _, object in ipairs(DynamicObjects) do
+                    object.stiction = val
+                end
+            end,
+            type = Inspector.dataTypes.number,
+            min = 0,
+            max = 2,
+            format = "%.3f"
+            },
+
             {label = "tilt",
             getter = function() return World:isTiltEnabled() end,
             setter = function(value) World:setTiltEnabled(value) end,
@@ -179,7 +220,7 @@ function Inspector:increase(isInitialPress)
         row.cachedValue = true
     elseif row.type == Inspector.dataTypes.number then
         if row.min ~= nil and row.max ~= nil then
-            local step = (row.max - row.min)/90 --3 seconds to scrub full range
+            local step = (row.max - row.min)/150 --5 seconds to scrub full range
             row.cachedValue += step
         else
             row.cachedValue *= 1.015
@@ -200,7 +241,7 @@ function Inspector:decrease(isInitialPress)
     elseif row.type == Inspector.dataTypes.number then
         -- can use range?
         if row.min ~= nil and row.max ~= nil then
-            local step = (row.max - row.min)/90 --3 seconds to scrub full range
+            local step = (row.max - row.min)/150 --5 seconds to scrub full range
             row.cachedValue -= step
         else
             row.cachedValue *= 0.975

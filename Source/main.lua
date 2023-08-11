@@ -35,10 +35,6 @@ EditorSprite = nil
 
 local world_setup = false
 
-local stiction = 0.3
-local sliction = 0.25
-local dragCoeff = 0.0015
-
 wallSegments = {} -- fixme: local?
 DynamicObjects = {}
 StaticObjects = {}
@@ -111,66 +107,6 @@ function setup()
     world_setup = true
 end
 
-local function drawPhysConstants(x, y)
-    gfx.drawText(string.format(
-        "stic: %.3f slic: %.3f drag: %.5f grav: %.0f",
-        stiction, sliction, dragCoeff, World:getGravityMagnitude()),x,y)
-end
-
-local function updatePhysConstants()
-    local frictionChanged = false
-    local dragChanged = false
-    if playdate.buttonIsPressed(playdate.kButtonDown)
-    then
-        frictionChanged = true
-        stiction -= .001
-        if stiction < 0 then stiction = 0 end
-        if stiction < sliction then sliction = stiction end
-    end
-    if playdate.buttonIsPressed(playdate.kButtonUp) then 
-        frictionChanged = true
-        stiction += .001 
-    end
-    if playdate.buttonIsPressed(playdate.kButtonLeft)
-    then
-        frictionChanged = true
-        sliction -= .001
-        if sliction < 0 then sliction = 0 end
-    end
-    if playdate.buttonIsPressed(playdate.kButtonRight)
-    then
-        frictionChanged = true
-        sliction += .001
-        if stiction < sliction then stiction = sliction end
-    end
-    if playdate.buttonIsPressed(playdate.kButtonB) then 
-        dragChanged = true
-        dragCoeff -= .00005
-        if dragCoeff < 0 then dragCoeff = 0 end
-    end
-    if playdate.buttonIsPressed(playdate.kButtonA) then 
-        dragChanged = true
-        dragCoeff += .00005 
-    end
-
-    if dragChanged or frictionChanged then
-        for _, object in ipairs(DynamicObjects) do
-            object.stiction = stiction
-            object.sliction = sliction
-            object.dragCoeff = dragCoeff
-            object:setEdgeFriction(stiction)
-        end
-    end
-
-    if not playdate.isCrankDocked()
-    then
-        local crankAmt = playdate.getCrankChange()
-        if crankAmt ~= 0 then
-            World:setGravityMagnitude(World:getGravityMagnitude() + playdate.getCrankChange() * 10)
-        end
-    end
-end
-
 local function updatePositionCrankSettings()
     local forceChanged = false
     if playdate.buttonIsPressed(playdate.kButtonDown)
@@ -213,7 +149,7 @@ local function drawTorqueCrankSettings(x, y)
 end
 
 local function updateFrictionAndDragValues()
-    if Settings.linearDragEnabled or Settings.rotaryDragEnabled then
+    if Settings.dragEnabled then
         for _, item in ipairs(DynamicObjects) do
             --printTable(item)
             item:updateDrag()
@@ -229,9 +165,7 @@ function updateInputs()
         CrankDelta = 0
         CrankAngle = 0
     end
-    if Settings.inputMode == InputModes.setConstants then
-        updatePhysConstants()
-    elseif Settings.inputMode == InputModes.positionCrank then
+    if Settings.inputMode == InputModes.positionCrank then
         updatePositionCrankSettings()
     elseif Settings.inputMode == InputModes.torqueCrank then
         updateTorqueCrankSettings()
@@ -277,9 +211,7 @@ end
 
 function updateGraphics()
     gfx.sprite.update()
-    if Settings.inputMode == InputModes.setConstants then
-        drawPhysConstants(0,0)
-    elseif Settings.inputMode == InputModes.positionCrank then
+    if Settings.inputMode == InputModes.positionCrank then
         drawPositionCrankSettings(0,0)
     elseif Settings.inputMode == InputModes.torqueCrank then
         drawTorqueCrankSettings(0,0)

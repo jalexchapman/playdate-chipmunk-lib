@@ -74,10 +74,8 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     self.isControllable = false
     self.isTorqueCrankable = false
 
-    if Settings.linearDragEnabled then
+    if Settings.dragEnabled then
         self:addLinearDragConstraint()
-    end
-    if Settings.rotaryDragEnabled then
         self:addRotaryDragConstraint()
     end
     if Settings.inputMode == InputModes.positionCrank then

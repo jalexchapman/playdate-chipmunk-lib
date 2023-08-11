@@ -1,18 +1,16 @@
 import "main.lua"
 
 InputModes = {
-    setConstants = 1,
-    editObjects = 2,
-    positionCrank = 3,
-    torqueCrank = 4
+    torqueCrank = 1,
+    positionCrank = 2,
+    editObjects = 3
 }
 
 Settings = {
-    linearDragEnabled = false,
-    rotaryDragEnabled = false,
+    dragEnabled = false,
     updateDragEveryChipmunkStep = true,
     dampedSpringsEnabled = false,
-    inputMode = InputModes.setConstants
+    inputMode = InputModes.torqueCrank
 }
 
 function Settings.disablePositionCrank()
@@ -59,7 +57,7 @@ end
 
 function Settings.menuSetup()
     local menu = playdate.getSystemMenu()
-    menu:addOptionsMenuItem("mode", {"constants", "edit", "pos crank", "tq. crank"}, "constants", 
+    menu:addOptionsMenuItem("mode", {"tq. crank", "pos crank",  "edit"}, "constants", 
     function(value)
         if Settings.inputMode == InputModes.positionCrank then
             Settings.disablePositionCrank()
@@ -68,9 +66,7 @@ function Settings.menuSetup()
         elseif Settings.inputMode == InputModes.editObjects then
             Settings.disableEditor()
         end
-        if value == "constants" then
-            Settings.inputMode = InputModes.setConstants
-        elseif value == "edit" then
+        if value == "edit" then
             Settings.inputMode = InputModes.editObjects
             Settings.enableEditor()
         elseif value == "pos crank" then
@@ -81,19 +77,14 @@ function Settings.menuSetup()
             Settings.enableTorqueCrank()
         end
     end)
-    menu:addOptionsMenuItem("friction", {"off", "linear", "rotary", "both", "both2", "spring"}, "off",
+    menu:addOptionsMenuItem("friction", {"off", "on", "fast", "spring"}, "off",
     function(value)
-        if value == "linear" or value == "both" or value == "both2" then
-            Settings.linearDragEnabled = true
+        if value == "on" or value == "fast" then
+            Settings.dragEnabled = true
         else
-            Settings.linearDragEnabled = false
+            Settings.dragEnabled = false
         end
-        if value == "rotary" or value == "both" or value == "both2" then
-            Settings.rotaryDragEnabled = true
-        else
-            Settings.rotaryDragEnabled = false
-        end
-        if value == "both2"  then
+        if value == "fast"  then
             Settings.updateDragEveryChipmunkStep = false
         else
             Settings.updateDragEveryChipmunkStep = true
@@ -104,14 +95,11 @@ function Settings.menuSetup()
             Settings.dampedSpringsEnabled = false
         end
         for _, item in ipairs(DynamicObjects) do
-            if Settings.linearDragEnabled then
+            if Settings.dragEnabled then
                 item:addLinearDragConstraint()
-            else
-                item:removeLinearDragConstraint()
-            end
-            if Settings.rotaryDragEnabled then
                 item:addRotaryDragConstraint()
             else
+                item:removeLinearDragConstraint()
                 item:removeRotaryDragConstraint()
             end
             if Settings.dampedSpringsEnabled then

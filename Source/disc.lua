@@ -51,10 +51,8 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     self.isControllable = false
     self.isTorqueCrankable = false
 
-    if Settings.linearDragEnabled then
+    if Settings.dragEnabled then
         self:addLinearDragConstraint()
-    end
-    if Settings.rotaryDragEnabled then
         self:addRotaryDragConstraint()
     end
     if Settings.inputMode == InputModes.torqueCrank then

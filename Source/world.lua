@@ -5,7 +5,9 @@ World.minGravity = 0
 World.maxGravity = 66778 -- 9.8 m/s^2 at 173ppi (6811 px/m)
 World._gravityMagnitude = 16000 -- feels a bit more comfortable
 World._tiltEnabled = true
-
+World.stiction = 0.3
+World.sliction = 0.25
+World.dragCoeff = 0.0015
 
 function World:setup()
     if self.space ~= nil then return end
