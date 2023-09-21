@@ -194,14 +194,28 @@ function Box:toggleControl()
     else
         print("Disabling control on box")
     end
-
 end
 
 function Box:setEdgeFriction(frictionCoeff)
-    if frictionCoeff > 0 then
+    if frictionCoeff >= 0 then
         self._shape:setFriction(frictionCoeff)
     end
 end
+
+function Box:getEdgeFriction(frictionCoeff)
+    return self._shape:getFriction()
+end
+
+function Box:setElasticity(e)
+    if e >= 0 then
+        self._shape:setElasticity(e)
+    end
+end
+
+function Box:getElasticity()
+    return self._shape:getElasticity()
+end
+
 
 function Box:update()
     local a = self._body:getAngle()
@@ -236,9 +250,9 @@ function Box:updateDrag()
         local w = self._body:getAngularVelocity()
         local drag = 0
         local friction = 0
-        local frictionCoeff = self.stiction
+        local frictionCoeff = self.stiction * World.stiction
         if (vx ~=0 or vy ~= 0 or w ~= 0) then
-            frictionCoeff = self.sliction
+            frictionCoeff = self.sliction * World.sliction
         end
         if (self._linearDragConstraint ~= nil) then
             local crossSection = (self.startingWidth + self.startingHeight) / 2 --fixme: width at rotation - velocity

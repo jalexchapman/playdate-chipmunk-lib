@@ -33,6 +33,26 @@ function StaticSegment:init(pointA, pointB, radius, friction, elasticity)
     self:addSprite()
 end
 
+function StaticSegment:setEdgeFriction(frictionCoeff)
+    if frictionCoeff >= 0 then
+        self._shape:setFriction(frictionCoeff)
+    end
+end
+
+function StaticSegment:getEdgeFriction(frictionCoeff)
+    return self._shape:getFriction()
+end
+
+function StaticSegment:setElasticity(e)
+    if e >= 0 then
+        self._shape:setElasticity(e)
+    end
+end
+
+function StaticSegment:getElasticity()
+    return self._shape:getElasticity()
+end
+
 function StaticSegment.getBoundingRect(a, b, radius)
     local diameter = radius * 2
     local boundingRect = geom.rect.new(geom.rect.fast_union(

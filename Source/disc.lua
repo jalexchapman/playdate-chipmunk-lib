@@ -267,9 +267,23 @@ function Disc:toggleControl()
 end
 
 function Disc:setEdgeFriction(frictionCoeff)
-    if frictionCoeff > 0 then
+    if frictionCoeff >= 0 then
         self._shape:setFriction(frictionCoeff)
     end
+end
+
+function Disc:getEdgeFriction(frictionCoeff)
+    return self._shape:getFriction()
+end
+
+function Disc:setElasticity(e)
+    if e >= 0 then
+        self._shape:setElasticity(e)
+    end
+end
+
+function Disc:getElasticity()
+    return self._shape:getElasticity()
 end
 
 function Disc:__gc()

@@ -75,12 +75,7 @@ function Inspector:openWorld()
 
             {label = "surface k. fric",
             getter = function() return World.sliction end,
-            setter = function(val)
-                World.sliction = val
-                for _, object in ipairs(DynamicObjects) do
-                    object.sliction = val
-                end
-            end,
+            setter = function(val) World.sliction = val end,
             type = Inspector.dataTypes.number,
             min = 0,
             max = 2,
@@ -89,12 +84,7 @@ function Inspector:openWorld()
 
             {label = "surface st. fric",
             getter = function() return World.stiction end,
-            setter = function(val)
-                World.stiction = val
-                for _, object in ipairs(DynamicObjects) do
-                    object.stiction = val
-                end
-            end,
+            setter = function(val)World.stiction = val end,
             type = Inspector.dataTypes.number,
             min = 0,
             max = 2,
@@ -112,18 +102,57 @@ end
 
 function Inspector:openObject(obj)
     if not self.isOpened then
+        self.target = obj
         self.selectedLine = 1
-        if obj:isa(Disc) then
-            print("Inspect disc")
-        elseif obj:isa(Box) then
-            print("Inspect box")
+        local menuX = rightDefaultX
+        if obj.x > 200 then menuX = leftDefaultX end
+        self:moveTo(menuX,defaultY)
+        self:setSize(defaultWidth, defaultHeight)
+        self:addSprite()
+        self:setCenter(0,0)
+        printTable(self.x, self.y)
+        Inspector.playOpenSound()
+        self.caption = "Object"
+        self.isOpened = true
+        self.targetDataTable = {
+            {label = "edge friction",
+            getter = function() return obj:getEdgeFriction() end,
+            setter = function(val) obj:setEdgeFriction(val) end,
+            type = Inspector.dataTypes.number,
+            min = 0,
+            max = 2,
+            format = "%.3f"
+            },
+            {label = "elasticity",
+            getter = function() return obj:getElasticity() end,
+            setter = function(val) obj:setElasticity(val) end,
+            type = Inspector.dataTypes.number,
+            min = 0,
+            max = 1,
+            format = "%.3f"
+            },
+        }
+
+
+        if obj:isa(Disc) or obj:isa(Box) then
+            if obj:isa(Disc) then
+                self.caption = "Disc"
+            else
+                self.caption = "Box"
+            end
+            -- add to targetDataTable:
+            -- density
+            -- surface static/dynamic friction
+            -- isCrankable
+            -- isAbsoluteCrank
+            -- crankTorque
         elseif obj:isa(StaticSegment) then
-            print("Inspect segment")
+            self.caption = "Static segment"
         else
             print("Error: inspector attempted to inspect unsupported object type. Object:")
             printTable(obj)
         end
-        --TODO: self:cacheTableValues()
+        self:cacheTableValues()
     end
 end
 
@@ -172,6 +201,7 @@ end
 
 function Inspector:draw()
     local dividerHeight = marginWidth + 20
+    gfx.setLineWidth(1)
     gfx.setColor(gfx.kColorWhite)
     gfx.fillRect(0, 0, self.width, self.height)
     gfx.setColor(gfx.kColorBlack)
