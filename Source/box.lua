@@ -216,6 +216,25 @@ function Box:getElasticity()
     return self._shape:getElasticity()
 end
 
+function Box:setDensity(d)
+    if d > 0 then
+        self.density = d
+
+        local w = self.startingWidth
+        local h = self.startingHeight
+        local m = d * w * h
+        self._body:setMass(m)
+        self.mass = m
+
+        local I = chipmunk.momentForBox(m, w, h)
+        self.moment = I
+        self._body:setMoment(I)
+    end
+end
+
+function Box:getDensity()
+    return self.density
+end
 
 function Box:update()
     local a = self._body:getAngle()

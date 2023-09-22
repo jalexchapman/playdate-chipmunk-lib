@@ -313,9 +313,6 @@ int chipmunk_shape_getBody(lua_State* L){
 static const lua_reg shapeClass[] = {
     {"__gc", chipmunk_shape_delete},
     //void cpShapeSetBody(*shape, *body)
-    //cpFloat cpShapeGetMass(*shape)
-    //void cpShapeSetMass(*shape, cpFloat mass)
-    //cpFloat cpShapeGetMoment(*shape)
     {"getFriction", chipmunk_shape_getFriction},
     {"setFriction", chipmunk_shape_setFriction},
     {"getElasticity", chipmunk_shape_getElasticity},
@@ -451,10 +448,24 @@ int chipmunk_body_getMass(lua_State* L){
     return 1;
 }
 
+int chipmunk_body_setMass(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    cpFloat mass = pd->lua->getArgFloat(2);
+    cpBodySetMass(body, mass);
+    return 0;
+}
+
 int chipmunk_body_getMoment(lua_State* L){
     cpBody* body = getBodyArg(1);
     pd->lua->pushFloat((float) cpBodyGetMoment(body));
     return 1;
+}
+
+int chipmunk_body_setMoment(lua_State* L){
+    cpBody* body = getBodyArg(1);
+    cpFloat moment = pd->lua->getArgFloat(2);
+    cpBodySetMoment(body, moment);
+    return 0;
 }
 
 static const lua_reg bodyClass[] = {
@@ -475,7 +486,9 @@ static const lua_reg bodyClass[] = {
     {"getTorque", chipmunk_body_getTorque},
     {"setTorque", chipmunk_body_setTorque},
     {"getMass", chipmunk_body_getMass},
-    {"getMoment", chipmunk_body_getMoment}
+    {"setMass", chipmunk_body_setMass},
+    {"getMoment", chipmunk_body_getMoment},
+    {"setMoment", chipmunk_body_setMoment}
 };
 
 //CONSTRAINT

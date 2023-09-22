@@ -73,7 +73,7 @@ function Inspector:openWorld()
             format = "%.5f"
             },
 
-            {label = "surface k. fric",
+            {label = "surface kin. friction",
             getter = function() return World.sliction end,
             setter = function(val) World.sliction = val end,
             type = Inspector.dataTypes.number,
@@ -82,7 +82,7 @@ function Inspector:openWorld()
             format = "%.3f"
             },
 
-            {label = "surface st. fric",
+            {label = "surface stat. friction",
             getter = function() return World.stiction end,
             setter = function(val)World.stiction = val end,
             type = Inspector.dataTypes.number,
@@ -140,12 +140,43 @@ function Inspector:openObject(obj)
             else
                 self.caption = "Box"
             end
+            table.insert(self.targetDataTable,
+                {label = "surface kin. friction",
+                getter = function() return obj.sliction end,
+                setter = function(val) obj.sliction = val end,
+                type = Inspector.dataTypes.number,
+                min = 0,
+                max = 2,
+                format = "%.3f"
+                }
+            )
+            table.insert(self.targetDataTable,
+                {label = "surface stat. friction",
+                getter = function() return obj.stiction end,
+                setter = function(val) obj.stiction = val end,
+                type = Inspector.dataTypes.number,
+                min = 0,
+                max = 2,
+                format = "%.3f"
+                }
+            )
+            table.insert(self.targetDataTable,
+                {label = "density",
+                getter = function() return obj:getDensity() end,
+                setter = function(val) return obj:setDensity(val) end,
+                type = Inspector.dataTypes.number,
+                min = 0.00003,
+                --max = 0.3,
+                format = "%.5f"
+                }
+            )
+
             -- add to targetDataTable:
-            -- density
-            -- surface static/dynamic friction
-            -- isCrankable
-            -- isAbsoluteCrank
             -- crankTorque
+            -- dragCoeff (changing World.dragCoeff to World.viscosity and drag coeff to obj.dragCoeff * World.viscosity)
+            -- isCrankable (bigger refactor)
+            -- isAbsoluteCrank (bigger refactor)
+
         elseif obj:isa(StaticSegment) then
             self.caption = "Static segment"
         else

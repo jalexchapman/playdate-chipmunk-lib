@@ -286,6 +286,25 @@ function Disc:getElasticity()
     return self._shape:getElasticity()
 end
 
+function Disc:setDensity(d)
+    if d > 0 then
+        self.density = d
+        local r = self.radius
+
+        local m = math.pi * r^2 * d
+        self._body:setMass(m)
+        self.mass = m
+
+        local I = chipmunk.momentForCircle(m, r, 0, 0)
+        self.moment = I
+        self._body:setMoment(I)
+    end
+end
+
+function Disc:getDensity()
+    return self.density
+end
+
 function Disc:__gc()
     print("destroying disc")
     self:disablePositionCrank()
