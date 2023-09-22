@@ -28,6 +28,7 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     self._body = body
     self.mass = mass
     self.moment = moment
+    self.crankStrength = 12 * moment
 
     self.prevX = x
     self.prevY = y
@@ -74,10 +75,8 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     self.isControllable = false
     self.isTorqueCrankable = false
 
-    if Settings.linearDragEnabled then
+    if Settings.dragEnabled then
         self:addLinearDragConstraint()
-    end
-    if Settings.rotaryDragEnabled then
         self:addRotaryDragConstraint()
     end
     if Settings.inputMode == InputModes.positionCrank then
@@ -149,15 +148,16 @@ function Box:enablePositionCrank()
         if self._positionCrankConstraint == nil then
             self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
         end
-        self:setPositionCrankForce(MaxCrankForce)
+        self:setPositionCrankForce(self.crankStrength)
         World.space:addConstraint(self._positionCrankConstraint)
     end
 end
 
 function Box:setPositionCrankForce(force)
+    local positionStrengthFactor = 13 -- pos-crank must be stronger thant torque-crank to feel right
     if self._positionCrankConstraint ~= nil then
-        self._positionCrankConstraint:setMaxBias(2 * force)
-        self._positionCrankConstraint:setMaxForce(force)
+        self._positionCrankConstraint:setMaxBias(2 * force * positionStrengthFactor)
+        self._positionCrankConstraint:setMaxForce(force * positionStrengthFactor)
     end
 end
 
@@ -196,13 +196,55 @@ function Box:toggleControl()
     else
         print("Disabling control on box")
     end
-
 end
 
 function Box:setEdgeFriction(frictionCoeff)
-    if frictionCoeff > 0 then
+    if frictionCoeff >= 0 then
         self._shape:setFriction(frictionCoeff)
     end
+end
+
+function Box:getEdgeFriction(frictionCoeff)
+    return self._shape:getFriction()
+end
+
+function Box:setElasticity(e)
+    if e >= 0 then
+        self._shape:setElasticity(e)
+    end
+end
+
+function Box:getElasticity()
+    return self._shape:getElasticity()
+end
+
+function Box:setDensity(d)
+    if d > 0 then
+        self.density = d
+
+        local w = self.startingWidth
+        local h = self.startingHeight
+        local m = d * w * h
+        self._body:setMass(m)
+        self.mass = m
+
+        local I = chipmunk.momentForBox(m, w, h)
+        self.moment = I
+        self._body:setMoment(I)
+    end
+end
+
+function Box:getDensity()
+    return self.density
+end
+
+function Box:setCrankStrength(f)
+    self.crankStrength = f
+    self:setPositionCrankForce(f)
+end
+
+function Box:getCrankStrength()
+    return self.crankStrength
 end
 
 function Box:update()
@@ -238,9 +280,9 @@ function Box:updateDrag()
         local w = self._body:getAngularVelocity()
         local drag = 0
         local friction = 0
-        local frictionCoeff = self.stiction
+        local frictionCoeff = self.stiction * World.stiction
         if (vx ~=0 or vy ~= 0 or w ~= 0) then
-            frictionCoeff = self.sliction
+            frictionCoeff = self.sliction * World.sliction
         end
         if (self._linearDragConstraint ~= nil) then
             local crossSection = (self.startingWidth + self.startingHeight) / 2 --fixme: width at rotation - velocity

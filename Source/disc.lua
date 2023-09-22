@@ -27,6 +27,7 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     self._body = body
     self.mass = mass
     self.moment = moment
+    self.crankStrength = 8 * moment
 
     self.prevX = x
     self.prevY = y
@@ -51,10 +52,8 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     self.isControllable = false
     self.isTorqueCrankable = false
 
-    if Settings.linearDragEnabled then
+    if Settings.dragEnabled then
         self:addLinearDragConstraint()
-    end
-    if Settings.rotaryDragEnabled then
         self:addRotaryDragConstraint()
     end
     if Settings.inputMode == InputModes.torqueCrank then
@@ -119,7 +118,7 @@ function Disc.drawStatic(radius, angle, pattern, color, useOutline)
 end
 
 function Disc:pointHit(p)
-    local minRadius = 3
+    local minRadius = 4
     local squaredHitRadius = math.max(self.radius, minRadius) ^ 2
     local squaredDist = (p.x - self.x)^2 + (p.y - self.y)^2
     return squaredDist < squaredHitRadius
@@ -219,15 +218,16 @@ function Disc:enablePositionCrank()
         if self._positionCrankConstraint == nil then
             self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
         end
-        self:setPositionCrankForce(MaxCrankForce)
+        self:setPositionCrankForce(self.crankStrength)
         World.space:addConstraint(self._positionCrankConstraint)
     end
 end
 
 function Disc:setPositionCrankForce(force)
+    local positionStrengthFactor = 13 -- pos-crank must be stronger thant torque-crank to feel right
     if self._positionCrankConstraint ~= nil then
-        self._positionCrankConstraint:setMaxBias(2 * force)
-        self._positionCrankConstraint:setMaxForce(force)
+        self._positionCrankConstraint:setMaxBias(2 * force * positionStrengthFactor)
+        self._positionCrankConstraint:setMaxForce(force * positionStrengthFactor)
     end
 end
 
@@ -269,9 +269,51 @@ function Disc:toggleControl()
 end
 
 function Disc:setEdgeFriction(frictionCoeff)
-    if frictionCoeff > 0 then
+    if frictionCoeff >= 0 then
         self._shape:setFriction(frictionCoeff)
     end
+end
+
+function Disc:getEdgeFriction(frictionCoeff)
+    return self._shape:getFriction()
+end
+
+function Disc:setElasticity(e)
+    if e >= 0 then
+        self._shape:setElasticity(e)
+    end
+end
+
+function Disc:getElasticity()
+    return self._shape:getElasticity()
+end
+
+function Disc:setDensity(d)
+    if d > 0 then
+        self.density = d
+        local r = self.radius
+
+        local m = math.pi * r^2 * d
+        self._body:setMass(m)
+        self.mass = m
+
+        local I = chipmunk.momentForCircle(m, r, 0, 0)
+        self.moment = I
+        self._body:setMoment(I)
+    end
+end
+
+function Disc:getDensity()
+    return self.density
+end
+
+function Disc:setCrankStrength(f)
+    self.crankStrength = f
+    self:setPositionCrankForce(f)
+end
+
+function Disc:getCrankStrength()
+    return self.crankStrength
 end
 
 function Disc:__gc()
