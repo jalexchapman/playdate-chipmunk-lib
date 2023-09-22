@@ -4,6 +4,7 @@ import "CoreLibs/object"
 import "world.lua"
 import "segmentpreview.lua"
 import "inspector.lua"
+import "caption.lua"
 
 local gfx = playdate.graphics
 local snd = playdate.sound
@@ -38,6 +39,7 @@ local maxSegmentWidth = 40
 
 function Editor:init()
     self.segmentPreviewer = SegmentPreview()
+    self.caption = Caption()
     self.inspector = Inspector()
 
     Editor.super.init(self)
@@ -59,6 +61,7 @@ function Editor:init()
 end
 
 function Editor:addSprite()
+    self.caption:addSprite()
     self.currentMode = Editor.modeForAngle(CrankAngle)
     self:enableMode(self.currentMode)
     Editor.super.addSprite(self)
@@ -68,6 +71,7 @@ function Editor:addSprite()
 end
 
 function Editor:removeSprite()
+    self.caption:removeSprite()
     self.segmentPreviewer:removeSprite()
     self:closeInspector()
     Editor.super.removeSprite(self)
@@ -250,10 +254,11 @@ end
 function Editor:enableMode(modeNum)
     print("Editor:enableMode(" .. modeNum .. ")")
     if math.floor(modeNum) ~= modeNum or modeNum > 6 or modeNum < 1 then
-        print("Invalid parameter '" .. modeNum .. "' passed into enableMode. Must be an int from 1 to 5.")
+        print("Invalid parameter '" .. modeNum .. "' passed into enableMode. Must be an int from 1 to 6.")
         return
     end
     if modeNum == EditorModes.delete then
+        self.caption:setText("Delete")
         self:setSize(32,32)
         self:setCenter(0.5,0.5)
         self:setCollideRect(16,16,2,2)
@@ -262,6 +267,7 @@ function Editor:enableMode(modeNum)
         self:closeInspector()
         self.currentMode = EditorModes.delete
     elseif modeNum == EditorModes.inspect then
+        self.caption:setText("Inspect Object (click background for globals)")
         self:setSize(32,32)
         self:setCenter(0.344,0.344)
         self:setCollideRect(10,10,3,3)
@@ -269,6 +275,7 @@ function Editor:enableMode(modeNum)
         self.segmentPreviewer:removeSprite()
         self.currentMode = EditorModes.inspect     
     elseif modeNum == EditorModes.toggleControl then
+        self.caption:setText("Toggle Crankable")
         self:setSize(32,32)
         self:setCenter(0,0)
         self:setCollideRect(1,1,2,2)
@@ -277,6 +284,7 @@ function Editor:enableMode(modeNum)
         self:closeInspector()
         self.currentMode = EditorModes.toggleControl
     elseif modeNum == EditorModes.disc then
+        self.caption:setText("Disc (B: hold to resize  A: place)")
         local breadth = (self.discRadius * 2) + 1
         self:setImage(nil)
         self:setCenter(0.5,0.5)
@@ -286,6 +294,7 @@ function Editor:enableMode(modeNum)
         self:closeInspector()
         self.currentMode = EditorModes.disc
     elseif modeNum == EditorModes.box then
+        self.caption:setText("Box (B: hold to resize  A: place)")
         self:setImage(nil)
         self:setCenter(0.5,0.5)
         self:setSize(self.boxWidth, self.boxHeight)
@@ -294,6 +303,7 @@ function Editor:enableMode(modeNum)
         self:closeInspector()
         self.currentMode = EditorModes.box
     elseif modeNum == EditorModes.segment then
+        self.caption:setText("Line (B: hold to resize  A: hold to draw)")
         self:setSize(32, 32)
         self:setCenter(0.5, 0.5)
         self:setCollideRect(16,16,2,2)

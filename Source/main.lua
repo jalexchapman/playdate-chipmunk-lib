@@ -205,6 +205,7 @@ function fixedRefresh() --derived from https://gafferongames.com/post/fix_your_t
     end
 
     updateGraphics()
-
-    playdate:drawFPS(15)
+    if Settings.inputMode ~= InputModes.editObjects then
+        playdate:drawFPS(0)
+    end
 end
