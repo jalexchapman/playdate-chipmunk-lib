@@ -9,7 +9,7 @@ local snd = playdate.sound
 class('Inspector').extends(gfx.sprite)
 
 local defaultWidth = 250
-local defaultHeight = 200
+local defaultHeight = 150
 local leftDefaultX = 20
 local rightDefaultX = 400 - leftDefaultX - defaultWidth
 local defaultY = 20
