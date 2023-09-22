@@ -163,11 +163,21 @@ function Inspector:openObject(obj)
             table.insert(self.targetDataTable,
                 {label = "density",
                 getter = function() return obj:getDensity() end,
-                setter = function(val) return obj:setDensity(val) end,
+                setter = function(val) obj:setDensity(val) end,
                 type = Inspector.dataTypes.number,
                 min = 0.00003,
                 --max = 0.3,
                 format = "%.5f"
+                }
+            )
+
+            table.insert(self.targetDataTable,
+                {label = "crank strength",
+                getter = function() return obj:getCrankStrength() end,
+                setter = function(val) obj:setCrankStrength(val) end,
+                type = Inspector.dataTypes.number,
+                min = 0,
+                format = "%.0f"
                 }
             )
 

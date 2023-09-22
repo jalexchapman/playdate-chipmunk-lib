@@ -28,6 +28,7 @@ function Box:init(x, y, width, height, cornerRadius, density, friction, elastici
     self._body = body
     self.mass = mass
     self.moment = moment
+    self.crankStrength = 12 * moment
 
     self.prevX = x
     self.prevY = y
@@ -147,15 +148,16 @@ function Box:enablePositionCrank()
         if self._positionCrankConstraint == nil then
             self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
         end
-        self:setPositionCrankForce(MaxCrankForce)
+        self:setPositionCrankForce(self.crankStrength)
         World.space:addConstraint(self._positionCrankConstraint)
     end
 end
 
 function Box:setPositionCrankForce(force)
+    local positionStrengthFactor = 13 -- pos-crank must be stronger thant torque-crank to feel right
     if self._positionCrankConstraint ~= nil then
-        self._positionCrankConstraint:setMaxBias(2 * force)
-        self._positionCrankConstraint:setMaxForce(force)
+        self._positionCrankConstraint:setMaxBias(2 * force * positionStrengthFactor)
+        self._positionCrankConstraint:setMaxForce(force * positionStrengthFactor)
     end
 end
 
@@ -234,6 +236,15 @@ end
 
 function Box:getDensity()
     return self.density
+end
+
+function Box:setCrankStrength(f)
+    self.crankStrength = f
+    self:setPositionCrankForce(f)
+end
+
+function Box:getCrankStrength()
+    return self.crankStrength
 end
 
 function Box:update()

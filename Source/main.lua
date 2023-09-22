@@ -29,8 +29,6 @@ SolidPattern = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
 ControllablePattern = {0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55}
 PlacementPattern = {0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x00,0xaa,0x55,0xaa,0x55,0xaa,0x55,0xaa,0x55}
 
-TorqueCrankPower = 8000
-MaxCrankForce = 80000
 EditorSprite = nil
 
 local world_setup = false
@@ -107,47 +105,6 @@ function setup()
     world_setup = true
 end
 
-local function updatePositionCrankSettings()
-    local forceChanged = false
-    if playdate.buttonIsPressed(playdate.kButtonDown)
-    then
-        forceChanged = true
-        MaxCrankForce *= 0.975
-    end
-    if playdate.buttonIsPressed(playdate.kButtonUp) then 
-        forceChanged = true
-        MaxCrankForce *= 1.015
-    end
-    if forceChanged then
-        for _, object in ipairs(DynamicObjects) do
-            if object.setPositionCrankForce ~= nil then
-                object:setPositionCrankForce(MaxCrankForce)
-            end
-        end
-    end
-end
-
-local function drawPositionCrankSettings(x, y)
-    gfx.drawText(string.format("Torque: %.0f", MaxCrankForce), x, y)
-end
-
-local function updateTorqueCrankSettings()
-    local forceChanged = false
-    if playdate.buttonIsPressed(playdate.kButtonDown)
-    then
-        forceChanged = true
-        TorqueCrankPower *= 0.975
-    end
-    if playdate.buttonIsPressed(playdate.kButtonUp) then 
-        forceChanged = true
-        TorqueCrankPower *= 1.015
-    end
-end
-
-local function drawTorqueCrankSettings(x, y)
-    gfx.drawText(string.format("Torque: %.0f", TorqueCrankPower), x, y)
-end
-
 local function updateFrictionAndDragValues()
     if Settings.dragEnabled then
         for _, item in ipairs(DynamicObjects) do
@@ -165,14 +122,11 @@ function updateInputs()
         CrankDelta = 0
         CrankAngle = 0
     end
-    if Settings.inputMode == InputModes.positionCrank then
-        updatePositionCrankSettings()
-    elseif Settings.inputMode == InputModes.torqueCrank then
-        updateTorqueCrankSettings()
+    if Settings.inputMode == InputModes.torqueCrank then
         if CrankDelta ~= 0 then
             for _, item in ipairs(DynamicObjects) do
                 if item.applyTorqueCrank ~= nil then
-                    item:applyTorqueCrank(CrankDelta * TorqueCrankPower)
+                    item:applyTorqueCrank(CrankDelta * item.crankStrength)
                 end
             end
         end
@@ -211,11 +165,6 @@ end
 
 function updateGraphics()
     gfx.sprite.update()
-    if Settings.inputMode == InputModes.positionCrank then
-        drawPositionCrankSettings(0,0)
-    elseif Settings.inputMode == InputModes.torqueCrank then
-        drawTorqueCrankSettings(0,0)
-    end
 end
 
 function playdate.update() 

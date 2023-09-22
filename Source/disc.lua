@@ -27,6 +27,7 @@ function Disc:init(x, y, radius, density, friction, elasticity)
     self._body = body
     self.mass = mass
     self.moment = moment
+    self.crankStrength = 8 * moment
 
     self.prevX = x
     self.prevY = y
@@ -217,15 +218,16 @@ function Disc:enablePositionCrank()
         if self._positionCrankConstraint == nil then
             self._positionCrankConstraint = chipmunk.constraint.newGearJoint(self._body, World.crankBody, 0, 1)
         end
-        self:setPositionCrankForce(MaxCrankForce)
+        self:setPositionCrankForce(self.crankStrength)
         World.space:addConstraint(self._positionCrankConstraint)
     end
 end
 
 function Disc:setPositionCrankForce(force)
+    local positionStrengthFactor = 13 -- pos-crank must be stronger thant torque-crank to feel right
     if self._positionCrankConstraint ~= nil then
-        self._positionCrankConstraint:setMaxBias(2 * force)
-        self._positionCrankConstraint:setMaxForce(force)
+        self._positionCrankConstraint:setMaxBias(2 * force * positionStrengthFactor)
+        self._positionCrankConstraint:setMaxForce(force * positionStrengthFactor)
     end
 end
 
@@ -303,6 +305,15 @@ end
 
 function Disc:getDensity()
     return self.density
+end
+
+function Disc:setCrankStrength(f)
+    self.crankStrength = f
+    self:setPositionCrankForce(f)
+end
+
+function Disc:getCrankStrength()
+    return self.crankStrength
 end
 
 function Disc:__gc()
