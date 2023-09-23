@@ -109,25 +109,6 @@ function Box:addRotaryDragConstraint()
     end
 end
 
-function Box:addDampedSpringConstraint()
-    local restLength = 15
-    local stiffness = 100
-    local damping = 25
-    local x, y = self._body:getPosition()
-    local springConstraint = chipmunk.constraint.newDampedSpring(
-        self._body, World.staticBody,
-        0, 0, x, y,
-        restLength,
-        stiffness,
-        damping
-    )
-    if springConstraint ~= nil then
-        World.space:addConstraint(springConstraint)
-        self._dampedSpringConstraint = springConstraint
-    end
-end
-
-
 function Box:removeLinearDragConstraint()
     if self._linearDragConstraint then World.space:removeConstraint(self._linearDragConstraint) end
     self._linearDragConstraint = nil
@@ -136,11 +117,6 @@ end
 function Box:removeRotaryDragConstraint()
     if self._rotDragConstraint then World.space:removeConstraint(self._rotDragConstraint) end
     self._rotDragConstraint = nil
-end
-
-function Box:removeDampedSpringConstraint()
-    if self._dampedSpringConstraint then World.space:removeConstraint(self._dampedSpringConstraint) end
-    self._dampedSpringConstraint = nil
 end
 
 function Box:enablePositionCrank()
@@ -335,7 +311,6 @@ function Box:__gc()
     self:disablePositionCrank()
     self:removeLinearDragConstraint()
     self:removeRotaryDragConstraint()
-    self:removeDampedSpringConstraint()
     World.space:removeShape(self._shape)
     World.space:removeBody(self._body)
     self:removeSprite()

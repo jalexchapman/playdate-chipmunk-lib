@@ -53,12 +53,12 @@ function Inspector:openWorld()
         self.target = World
         self.targetDataTable = {
             {label = "gravity",
-            getter = function() return World:getGravityMagnitude() end,
-            setter = function(val) World:setGravityMagnitude(val) end,
+            getter = function() return World:getGravityScale() end,
+            setter = function(val) World:setGravityScale(val) end,
             type = Inspector.dataTypes.number,
-            min = World.minGravity,
-            max = World.maxGravity,
-            format = "%.0f"},
+            min = 0,
+            max = 1,
+            format = "%.4f"},
 
             {label = "fluid drag",
             getter = function() return World.dragCoeff end,

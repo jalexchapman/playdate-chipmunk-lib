@@ -2,7 +2,8 @@ World = {}
 World.space = nil
 World.staticBody = nil
 World.minGravity = 0
-World.maxGravity = 66778 -- 9.8 m/s^2 at 173ppi (6811 px/m)
+World.G = 66778 -- 9.8 m/s^2 at 173ppi (6811 px/m)
+World.maxGravity = World.G
 World._gravityMagnitude = 16000 -- feels a bit more comfortable
 World._tiltEnabled = true
 World.stiction = 0.3
@@ -19,16 +20,17 @@ function World:setup()
     self.space:addBody(self.crankBody) -- this body represents the crank angle/velocity
 end
 
-function World:getGravityMagnitude()
-    return self._gravityMagnitude
+function World:getGravityScale()
+    return self._gravityMagnitude / World.G
 end
 
-function World:setGravityMagnitude(value)
-    if tonumber(value) then
-        if value < World.minGravity then value = World.minGravity end
-        if value > World.maxGravity then value = World.maxGravity end
-        if value ~= World._gravityMagnitude then
-            self._gravityMagnitude = value
+function World:setGravityScale(scale)
+    local grav = scale * World.G
+    if tonumber(grav) then
+        if grav < World.minGravity then grav = World.minGravity end
+        if grav > World.maxGravity then grav = World.maxGravity end
+        if grav ~= World._gravityMagnitude then
+            self._gravityMagnitude = grav
             if not self._tiltEnabled then
                 -- make sure space:setGravity gets poked
                 self:setAccelVector(0,1,0)
