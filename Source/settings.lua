@@ -9,7 +9,6 @@ InputModes = {
 Settings = {
     dragEnabled = false,
     updateDragEveryChipmunkStep = true,
-    dampedSpringsEnabled = false,
     inputMode = InputModes.torqueCrank
 }
 
@@ -77,7 +76,7 @@ function Settings.menuSetup()
             Settings.enableTorqueCrank()
         end
     end)
-    menu:addOptionsMenuItem("friction", {"off", "on", "fast", "spring"}, "off",
+    menu:addOptionsMenuItem("surf. drag", {"off", "on", "fast"}, "off",
     function(value)
         if value == "on" or value == "fast" then
             Settings.dragEnabled = true
@@ -89,11 +88,6 @@ function Settings.menuSetup()
         else
             Settings.updateDragEveryChipmunkStep = true
         end
-        if value == "spring" then
-            Settings.dampedSpringsEnabled = true
-        else
-            Settings.dampedSpringsEnabled = false
-        end
         for _, item in ipairs(DynamicObjects) do
             if Settings.dragEnabled then
                 item:addLinearDragConstraint()
@@ -101,11 +95,6 @@ function Settings.menuSetup()
             else
                 item:removeLinearDragConstraint()
                 item:removeRotaryDragConstraint()
-            end
-            if Settings.dampedSpringsEnabled then
-                item:addDampedSpringConstraint()
-            else
-                item:removeDampedSpringConstraint()
             end
         end
     end)

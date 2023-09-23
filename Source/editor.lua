@@ -149,13 +149,17 @@ end
 -- slice the crank arc into #EditorModes segments, centering the first at 0 degrees
 function Editor:crankSelectMode()
     --crank selects tool
-    if CrankDelta ~= 0 then
-        local slices = 6 --FIXME: #EditorModes doesn't seem to work? Don't like hardcoding
-        local newMode = Editor.modeForAngle(CrankAngle)
-        if self.currentMode ~= newMode then
-            self:playClickSound()
-            self:enableMode(newMode)
-            self:clearInputState()
+    if playdate.isCrankDocked() then
+        self.caption:setText("Delete (Use crank to select tool)")
+    else
+        if CrankDelta ~= 0 then
+            local slices = 6 --FIXME: #EditorModes doesn't seem to work? Don't like hardcoding
+            local newMode = Editor.modeForAngle(CrankAngle)
+            if self.currentMode ~= newMode then
+                self:playClickSound()
+                self:enableMode(newMode)
+                self:clearInputState()
+            end
         end
     end
 end
@@ -362,9 +366,6 @@ function Editor:deleteHere()
                 end
                 if target.removeRotaryDragConstraint ~= nil then
                     target:removeRotaryDragConstraint()
-                end
-                if target.removeDampedSpringConstraint ~= nil then
-                    target:removeDampedSpringConstraint()
                 end
             end
         end

@@ -148,24 +148,6 @@ function Disc:addRotaryDragConstraint()
     end
 end
 
-function Disc:addDampedSpringConstraint()
-    local restLength = 15
-    local stiffness = 100
-    local damping = 25
-    local x, y = self._body:getPosition()
-    local springConstraint = chipmunk.constraint.newDampedSpring(
-        self._body, World.staticBody,
-        0, 0, x, y,
-        restLength,
-        stiffness,
-        damping
-    )
-    if springConstraint ~= nil then
-        World.space:addConstraint(springConstraint)
-        self._dampedSpringConstraint = springConstraint
-    end
-end
-
 function Disc:removeLinearDragConstraint()
     if self._linearDragConstraint then 
         World.space:removeConstraint(self._linearDragConstraint)
@@ -180,12 +162,6 @@ function Disc:removeRotaryDragConstraint()
     end
 end
 
-function Disc:removeDampedSpringConstraint()
-    if self._dampedSpringConstraint then World.space:removeConstraint(self._dampedSpringConstraint) end
-    self._dampedSpringConstraint = nil
-end
-
-
 -- update linear fluid drag and linear friction against the floor play surface
 function Disc:updateDrag()
     if self._linearDragConstraint ~= nil or self._rotDragConstraint ~= nil then
@@ -193,9 +169,9 @@ function Disc:updateDrag()
         local w = self._body:getAngularVelocity()
         local drag = 0
         local friction = 0
-        local frictionCoeff = self.stiction
+        local frictionCoeff = self.stiction * World.stiction
         if (vx ~=0 or vy ~= 0 or w ~= 0) then
-            frictionCoeff = self.sliction
+            frictionCoeff = self.sliction * World.sliction
         end
         if (self._linearDragConstraint ~= nil) then
             --viscous drag = dragCoeff * frontal area * v^2; 
@@ -321,7 +297,6 @@ function Disc:__gc()
     self:disablePositionCrank()
     self:removeLinearDragConstraint()
     self:removeRotaryDragConstraint()
-    self:removeDampedSpringConstraint()
     World.space:removeShape(self._shape)
     World.space:removeBody(self._body)
     self:removeSprite()
